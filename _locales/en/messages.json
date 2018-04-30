@@ -1,0 +1,32 @@
+{
+    "options_fixSidebarStyle": {
+        "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab."
+    },
+    "options_browserAction_OpenInNewWindow": {
+        "message": "When the browser action is clicked open the sidebar page in a new window."
+    },
+    "options_openAfterCurrentTab": {
+        "message": "When the sidebar page is opened in a seperate tab in the current window then that tab should be placed after the current tab."
+    },
+    "options_openAsChildOfCurrentTab": {
+        "message": "When the sidebar page is opened in a seperate tab in the current window then that tab should be a child of the current tab. (The new tab must be placed after the current tab.)"
+    },
+    "options_delayBeforeWindowSeperation": {
+        "message": "When the sidebar page is loaded it takes a little while before it has determined what window it should control. Wait this long before moving the sidebar page's tab to a new window: "
+    },
+    "options_Milliseconds": {
+        "message": "milliseconds."
+    },
+    "options_resetCachedTreeStyleTabInternalId": {
+        "message": "Clear cached Tree Style Tab id"
+    },
+    "contextMenu_openSettings": {
+        "message": "Tree Style Tab in Separate Window Settings"
+    },
+    "contextMenu_openSidebarInTab": {
+        "message": "Open Tree Style Tab Sidebar in a new tab"
+    },
+    "contextMenu_openSidebarInWindow": {
+        "message": "Open Tree Style Tab Sidebar in a new window"
+    }
+}

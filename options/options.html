@@ -1,0 +1,46 @@
+<head>
+    <meta charset="utf-8">
+    <script type="application/javascript" src="/common.js"></script>
+    <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+
+<body>
+    <div>
+        <label>
+            <input id="fixSidebarStyle" type="checkbox">
+            <text class="message_options_fixSidebarStyle"></text>
+        </label>
+        <br />
+        <br />
+        <br />
+        <label>
+            <input id="browserAction_OpenInNewWindow" type="checkbox">
+            <text class="message_options_browserAction_OpenInNewWindow"></text>
+        </label>
+        <br />
+        <br />
+        <br />
+        <label>
+            <input id="openAfterCurrentTab" type="checkbox">
+            <text class="message_options_openAfterCurrentTab"></text>
+        </label>
+        <br />
+        <br />
+        <label>
+            <input id="openAsChildOfCurrentTab" type="checkbox">
+            <text class="message_options_openAsChildOfCurrentTab"></text>
+        </label>
+        <br />
+        <br />
+        <p>
+          <span class="message_options_delayBeforeWindowSeperation"></span>
+          <input id="delayBeforeWindowSeperationInMilliseconds" type="number" min="-1">
+          <span class="message_options_Milliseconds"></span>
+        </p>
+        <br />
+        <button id="resetTSTInternalId" class="message_options_resetCachedTreeStyleTabInternalId"></button>
+    </div>
+    <script src="options.js"></script>
+</body>
+
+</html>
