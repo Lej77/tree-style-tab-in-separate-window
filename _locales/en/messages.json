@@ -11,6 +11,9 @@
     "options_openAsChildOfCurrentTab": {
         "message": "When the sidebar page is opened in a seperate tab in the current window then that tab should be a child of the current tab. (The new tab must be placed after the current tab.)"
     },
+    "options_tab_ContextMenu": {
+        "message": "When a tab is right-clicked, show a context menu option to open the sidebar page in a new tab or window."
+    },
     "options_delayBeforeWindowSeperation": {
         "message": "When the sidebar page is loaded it takes a little while before it has determined what window it should control. Wait this long before moving the sidebar page's tab to a new window: "
     },
