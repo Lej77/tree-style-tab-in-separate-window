@@ -162,6 +162,7 @@ function getDefaultSettings() {
 
     openAfterCurrentTab: true,
     openAsChildOfCurrentTab: false,
+    tab_ContextMenu: false,
     delayBeforeWindowSeperationInMilliseconds: 500,
   };
 }
@@ -210,3 +211,4 @@ let settingsLoaded = browser.storage.local.get(null).then((value) => {
 });
 
 // #endregion Settings
+
