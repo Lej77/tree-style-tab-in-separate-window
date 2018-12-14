@@ -21,6 +21,12 @@ async function updateContextMenu() {
       let details = {
         contexts: ['browser_action']
       };
+      if (settings.tab_ContextMenu) {
+        details = {
+          contexts: ['browser_action', 'tab']
+        };
+      }
+      
       if (contextMenuId.startsWith('-')) {
         Object.assign(details, {
           type: 'separator',
@@ -270,6 +276,9 @@ settingsLoaded.finally(async () => {
         clearTimeout(id);
       }
       windowMoveTimeoutIds = [];
+    }
+    if (changes.tab_ContextMenu) {
+      updateContextMenu();
     }
   };
 
