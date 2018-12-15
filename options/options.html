@@ -6,13 +6,90 @@
 
 <body>
     <div>
-        <label>
-            <input id="fixSidebarStyle" type="checkbox">
-            <text class="message_options_fixSidebarStyle"></text>
-        </label>
+        <div class="sectionArea collapsed">
+            <header id="styleHeader" class="message_options_section_TreeStyleTabStyle"></header>
+
+            <label>
+                <input id="fixSidebarStyle" type="checkbox">
+                <text class="message_options_fixSidebarStyle"></text>
+            </label>
+            <br />
+            <br />
+
+            <label class="message_options_TreeStyleTabStyle_Info"></label>
+            <br />
+            <textarea id="currentTreeStyleTabStyle" style="width: 100%;" rows=15 readonly=true></textarea>
+        </div>
+
+        <div class="sectionArea collapsed">
+            <header class="message_options_section_ContextMenu"></header>
+
+            <div>
+                <label class="message_options_contextMenu_Root_CustomLabel"></label>
+                <input id="contextMenu_Root_CustomLabel" type="text">
+            </div>
+            <br />
+
+            <label>
+                <input id="contextMenu_ShowOnTabs" type="checkbox">
+                <text class="message_options_contextMenu_ShowOnTabs"></text>
+            </label>
+            <br />
+            <br />
+
+            <div class="sectionArea collapsed">
+                <header class="message_contextMenu_openSidebarInTab"></header>
+
+                <label class="requires_contextMenu_ShowOnTabs">
+                    <input id="contextMenu_OpenSidebarInTab_ShowOnTabs" type="checkbox">
+                    <text class="message_options_contextMenu_showItemOnTabs"></text>
+                </label>
+                <br />
+                <br />
+
+                <div>
+                    <label class="message_options_contextMenu_customLabel"></label>
+                    <input id="contextMenu_OpenSidebarInTab_CustomLabel" type="text">
+                </div>
+            </div>
+
+            <div class="sectionArea collapsed">
+                <header class="message_contextMenu_openSidebarInWindow"></header>
+
+                <label class="requires_contextMenu_ShowOnTabs">
+                    <input id="contextMenu_OpenSidebarInWindow_ShowOnTabs" type="checkbox">
+                    <text class="message_options_contextMenu_showItemOnTabs"></text>
+                </label>
+                <br />
+                <br />
+
+                <div>
+                    <label class="message_options_contextMenu_customLabel"></label>
+                    <input id="contextMenu_OpenSidebarInWindow_CustomLabel" type="text">
+                </div>
+            </div>
+
+            <div class="sectionArea collapsed">
+                <header class="message_contextMenu_openSettings"></header>
+
+                <label class="requires_contextMenu_ShowOnTabs">
+                    <input id="contextMenu_OpenSettings_ShowOnTabs" type="checkbox">
+                    <text class="message_options_contextMenu_showItemOnTabs"></text>
+                </label>
+                <br />
+                <br />
+
+                <div>
+                    <label class="message_options_contextMenu_customLabel"></label>
+                    <input id="contextMenu_OpenSettings_CustomLabel" type="text">
+                </div>
+            </div>
+
+        </div>
+
+        <div id="commandsArea"></div>
         <br />
-        <br />
-        <br />
+
         <label>
             <input id="browserAction_OpenInNewWindow" type="checkbox">
             <text class="message_options_browserAction_OpenInNewWindow"></text>
@@ -20,31 +97,59 @@
         <br />
         <br />
         <br />
-        <label>
-            <input id="openAfterCurrentTab" type="checkbox">
-            <text class="message_options_openAfterCurrentTab"></text>
-        </label>
+
+        <div class="area">
+            <label>
+                <input id="pinTabsBeforeMove" type="checkbox">
+                <text class="message_options_pinTabsBeforeMove"></text>
+            </label>
+            <br />
+            <br />
+            <label class="requires_pinTabsBeforeMove">
+                <input id="pinTabsBeforeMove_OnlyAfterCurrent" type="checkbox">
+                <text class="message_options_pinTabsBeforeMove_OnlyAfterCurrent"></text>
+            </label>
+            <br />
+        </div>
         <br />
+
+        <div class="area">
+            <label>
+                <input id="openAfterCurrentTab" type="checkbox">
+                <text class="message_options_openAfterCurrentTab"></text>
+            </label>
+            <br />
+            <br />
+
+            <label class="requires_openAfterCurrentTab">
+                <input id="openAsChildOfCurrentTab" type="checkbox">
+                <text class="message_options_openAsChildOfCurrentTab"></text>
+            </label>
+            <br />
+        </div>
         <br />
-        <label>
-            <input id="openAsChildOfCurrentTab" type="checkbox">
-            <text class="message_options_openAsChildOfCurrentTab"></text>
-        </label>
-        <br />
-        <br />
-        <label>
-            <input id="tab_ContextMenu" type="checkbox">
-            <text class="message_options_tab_ContextMenu"></text>
-        </label>
-        <br />
-        <br />
+
         <p>
-          <span class="message_options_delayBeforeWindowSeperation"></span>
-          <input id="delayBeforeWindowSeperationInMilliseconds" type="number" min="-1">
-          <span class="message_options_Milliseconds"></span>
+            <span class="message_options_delayBeforeWindowSeparation"></span>
+            <input id="delayBeforeWindowSeperationInMilliseconds" type="number" min="-1">
+            <span class="message_options_Milliseconds"></span>
         </p>
         <br />
-        <button id="resetTSTInternalId" class="message_options_resetCachedTreeStyleTabInternalId"></button>
+
+        <div class="sectionArea collapsed">
+            <header class="message_options_section_TreeStyleTabId"></header>
+            <div>
+                <label class="message_options_treeStyleTabInternalId"></label>
+                <input id="treeStyleTabInternalId" type="text">
+            </div>
+            <div class="internal-tst-id-buttons">
+                <button id="TST_InternalId_ResetButton" class="message_options_TST_InternalId_Reset"></button>
+                <button id="TST_InternalId_UpdateButton" class="message_options_TST_InternalId_ForceUpdate"></button>
+            </div>
+        </div>
+        <br />
+
+        <button id="resetSettingsButton" class="message_options_resetSettings"></button>
     </div>
     <script src="options.js"></script>
 </body>

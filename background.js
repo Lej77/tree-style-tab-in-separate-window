@@ -1,5 +1,6 @@
 
 
+
 async function pingTST() {
   try {
     await browser.runtime.sendMessage(kTST_ID, { type: 'ping' });
@@ -12,31 +13,92 @@ async function updateContextMenu() {
   try {
     await browser.contextMenus.removeAll();
 
-    for (let contextMenuId of [
-      'openSidebarInTab',
-      'openSidebarInWindow',
-      '---------------------',
-      'openSettings',
-    ]) {
-      let details = {
-        contexts: ['browser_action']
-      };
-      if (settings.tab_ContextMenu) {
-        details = {
-          contexts: ['browser_action', 'tab']
+    let creationDetails = [];
+
+    const getUniqueId = (prefix = '') => {
+      if (!prefix || typeof prefix !== 'string') {
+        prefix = '';
+      }
+      let uniqueId = 0;
+      let ids = creationDetails.map(item => item.id);
+      while (ids.includes(prefix + uniqueId)) {
+        uniqueId++;
+      }
+      return prefix + uniqueId;
+    };
+
+    const makeCreationDetails = (items) => {
+      const defaultValues = {};
+
+      for (let contextMenuItem of items) {
+        let { id, title, contexts, enabled = true, isDefault = false, isRootItem = false } = typeof contextMenuItem === 'string' ? { id: contextMenuItem } : contextMenuItem;
+        if (!enabled || (typeof enabled === 'function' && !enabled())) {
+          continue;
+        }
+        if (isDefault) {
+          Object.assign(defaultValues, contextMenuItem);
+          continue;
+        }
+
+        let details = {
+          contexts: contexts || defaultValues.contexts,
         };
+        if (typeof id === 'string' && id.startsWith('-')) {
+          Object.assign(details, {
+            id: getUniqueId(),
+            type: 'separator',
+          });
+        } else {
+          Object.assign(details, {
+            id: (defaultValues.alwaysUniqueIds ? getUniqueId(id ? id + '-' : id) : (!id && id !== 0 ? getUniqueId() : id)) + '',
+            title: title || browser.i18n.getMessage(`contextMenu_${id}`),
+          });
+        }
+        if (isRootItem) {
+          const rootItems = creationDetails.filter(item => item.contexts.every(c => details.contexts.includes(c)) && !item.parentId && item.id != details.id);
+          console.log(rootItems);
+          if (rootItems.length <= 1) {
+            continue;
+          }
+          for (let item of rootItems) {
+            item.parentId = details.id;
+          }
+        }
+        creationDetails = creationDetails.filter(item => item.id !== details.id);
+        if (isRootItem) {
+          // Parent items must be added first:
+          creationDetails.unshift(details);
+        } else {
+          creationDetails.push(details);
+        }
       }
-      
-      if (contextMenuId.startsWith('-')) {
-        Object.assign(details, {
-          type: 'separator',
-        });
-      } else {
-        Object.assign(details, {
-          id: contextMenuId,
-          title: browser.i18n.getMessage(`contextMenu_${contextMenuId}`),
-        });
-      }
+    };
+
+    let allEnabled = true;
+    const items = [
+      { id: 'openSidebarInTab', enabled: () => allEnabled || settings.contextMenu_OpenSidebarInTab_ShowOnTabs, title: settings.contextMenu_OpenSidebarInTab_CustomLabel },
+      { id: 'openSidebarInWindow', enabled: () => allEnabled || settings.contextMenu_OpenSidebarInWindow_ShowOnTabs, title: settings.contextMenu_OpenSidebarInWindow_CustomLabel },
+      { id: '---------------------', enabled: () => allEnabled || settings.contextMenu_OpenSettings_ShowOnTabs, },
+      { id: 'openSettings', enabled: () => allEnabled || settings.contextMenu_OpenSettings_ShowOnTabs, title: settings.contextMenu_OpenSettings_CustomLabel },
+    ];
+
+    {
+      makeCreationDetails([
+        { isDefault: true, contexts: ['browser_action'], alwaysUniqueIds: true },
+        ...items
+      ]);
+    }
+
+    if (settings.contextMenu_ShowOnTabs) {
+      allEnabled = false;
+      makeCreationDetails([
+        { isDefault: true, contexts: ['tab'], alwaysUniqueIds: true },
+        ...items,
+        { enabled: settings.contextMenu_Root_CustomLabel, title: settings.contextMenu_Root_CustomLabel, isRootItem: true }
+      ]);
+    }
+
+    for (let details of creationDetails) {
       await browser.contextMenus.create(details);
     }
   } catch (error) {
@@ -46,9 +108,33 @@ async function updateContextMenu() {
 }
 
 
+function getTSTStyle() {
+  let style = '';
+  if (settings.fixSidebarStyle) {
+
+    style += `
+/* Fix sidebar page in separate tab */
+body {
+  -moz-user-select: none;
+}
+.tab {
+  box-sizing: border-box;
+}
+`;
+
+  }
+
+  return style;
+}
+
+
 async function registerToTST() {
   try {
     await unregisterFromTST();  // Remove any style currently present.
+
+    if (!settings.fixSidebarStyle) {
+      return true;  // No need to register.
+    }
 
     let registrationDetails = {
       type: 'register-self',
@@ -59,19 +145,9 @@ async function registerToTST() {
 
     // #region Style
 
-    if (settings.fixSidebarStyle) {
-
-      registrationDetails.style = `
-/* Fix sidebar page in separate tab */
-body {
-  -moz-user-select: none;
-}
-.tab {
-  box-sizing: border-box;
-}
-`;
-
-    }
+    const style = getTSTStyle();
+    if (style)
+      registrationDetails.style = style;
 
     // #endregion Style
 
@@ -103,7 +179,6 @@ async function openTreeStyleTabSidebarInTab({ createNewWindow = false, openAfter
 
   // #region Info
 
-  let internalId = settings.treeStyleTabInternalId;
   let [activeTab,] = await browser.tabs.query({ currentWindow: true, active: true });
   let openAfterActiveDetails = () => {
     let details = { windowId: activeTab.windowId, index: activeTab.index + 1 };
@@ -119,65 +194,7 @@ async function openTreeStyleTabSidebarInTab({ createNewWindow = false, openAfter
 
   // #region Determine Tree Style Tab's internal id
 
-  if (!internalId) {
-
-    // #region Search for open Group Tab
-
-    let allWindows = await browser.windows.getAll();
-
-    for (let window of allWindows) {
-      if (internalId) {
-        break;
-      }
-      try {
-        let tstTabs = await getTabsFromTST(window.id, true);
-        for (let tstTab of tstTabs) {
-          if (tstTab.states.includes('group-tab')) {
-            let groupURLInfo = getGroupTabInfo(tstTab.url);
-            if (groupURLInfo) {
-              internalId = groupURLInfo.internalId;
-              break;
-            }
-          }
-        }
-      } catch (error) { }
-    }
-
-    // #endregion Search for open Group Tab
-
-
-    // #region Open a new Group Tab
-
-    if (!internalId) {
-      let tempTab;
-      try {
-        tempTab = await browser.tabs.create(Object.assign(openAfterActiveDetails(), { active: false }));
-        try {
-          let groupTab = await browser.runtime.sendMessage(kTST_ID, {
-            type: 'group-tabs',
-            tabs: [tempTab.id]
-          });
-          let groupURLInfo = getGroupTabInfo(groupTab.url);
-          if (groupURLInfo) {
-            internalId = groupURLInfo.internalId;
-          }
-        } catch (error) { }
-      } finally {
-        if (tempTab) {
-          await browser.tabs.remove(tempTab.id);
-        }
-      }
-    }
-
-    // #endregion Open a new Group Tab
-
-
-    if (!internalId) {
-      return null;
-    }
-    browser.storage.local.set({ treeStyleTabInternalId: internalId });
-    settings.treeStyleTabInternalId = internalId;
-  }
+  let internalId = await getInternalTSTId();
 
   // #endregion Determine Tree Style Tab's internal id
 
@@ -207,12 +224,13 @@ async function openTreeStyleTabSidebarInTab({ createNewWindow = false, openAfter
       if (tab) {
         await browser.tabs.update(tab.id, { url: sidebarURL });
       } else {
-        let createDetails = { url: sidebarURL, active: !createNewWindow };
+        let createDetails = { url: sidebarURL, active: !createNewWindow, windowId: activeTab.windowId };
 
-        if (createNewWindow || openAfterCurrent) {
+
+        if (createNewWindow && settings.pinTabsBeforeMove && (!settings.pinTabsBeforeMove_OnlyAfterCurrent || activeTab.pinned)) {
+          Object.assign(createDetails, { pinned: true });
+        } else if (createNewWindow || openAfterCurrent) {
           createDetails = Object.assign(openAfterActiveDetails(), createDetails);
-        } else {
-          createDetails = Object.assign({ windowId: activeTab.windowId }, createDetails);
         }
 
         tab = await browser.tabs.create(createDetails);
@@ -236,7 +254,9 @@ async function openTreeStyleTabSidebarInTab({ createNewWindow = false, openAfter
   // #region Move to new window
 
   if (createNewWindow) {
-    let moveToNewWindow = () => browser.windows.create({ incognito: activeTab.incognito, tabId: tab.id, });
+    let moveToNewWindow = async () => {
+      await browser.windows.create({ incognito: activeTab.incognito, tabId: tab.id, });
+    };
     if (settings.delayBeforeWindowSeperationInMilliseconds && settings.delayBeforeWindowSeperationInMilliseconds > 0) {
       let timeoutId = setTimeout(() => {
         windowMoveTimeoutIds = windowMoveTimeoutIds.filter(aId => aId !== timeoutId);
@@ -277,7 +297,7 @@ settingsLoaded.finally(async () => {
       }
       windowMoveTimeoutIds = [];
     }
-    if (changes.tab_ContextMenu) {
+    if (Object.keys(changes).some(change => change.startsWith('contextMenu'))) {
       updateContextMenu();
     }
   };
@@ -285,7 +305,7 @@ settingsLoaded.finally(async () => {
   // #endregion Settings
 
 
-  // #region Tree Stlye Tab
+  // #region Tree Style Tab
 
   browser.runtime.onMessageExternal.addListener((aMessage, aSender) => {
     if (aSender.id !== kTST_ID) {
@@ -303,15 +323,20 @@ settingsLoaded.finally(async () => {
     setTimeout(registerToTST, 5000);
   }
 
-  // #endregion Tree Stlye Tab
+  // #endregion Tree Style Tab
 
 
   // #region Context Menu
 
   updateContextMenu();
   browser.contextMenus.onClicked.addListener((info, tab) => {
+    let itemId = info.menuItemId;
+    let index = itemId.indexOf('-');
+    if (index >= 0) {
+      itemId = itemId.slice(0, index);
+    }
 
-    switch (info.menuItemId) {
+    switch (itemId) {
       case 'openSettings': {
         browser.runtime.openOptionsPage();
       } break;
@@ -330,4 +355,35 @@ settingsLoaded.finally(async () => {
 
   // #endregion Context Menu
 
+
+  // #region Keyboard Commands
+
+  browser.commands.onCommand.addListener(function (command) {
+    switch (command) {
+      case 'open-tst-sidebar-in-tab': {
+        openTreeStyleTabSidebarInTab(getDefaultMoveDetails({ createNewWindow: false }));
+      } break;
+
+      case 'open-tst-sidebar-in-window': {
+        openTreeStyleTabSidebarInTab(getDefaultMoveDetails({ createNewWindow: true }));
+      } break;
+    }
+  });
+
+  // #endregion Keyboard Commands
+
+
+  // #region Message
+
+  browser.runtime.onMessage.addListener(async (message) => {
+    if (!message.type)
+      return;
+    switch (message.type) {
+      case 'get-tst-style': {
+        return getTSTStyle();
+      } break;
+    }
+  });
+
+  // #endregion Message
 });

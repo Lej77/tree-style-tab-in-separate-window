@@ -1,27 +1,78 @@
 {
+    "options_section_TreeStyleTabId": {
+        "message": "Internal id for Tree Style Tab"
+    },
+    "options_section_ContextMenu": {
+        "message": "Context menu items"
+    },
+    "options_section_TreeStyleTabStyle": {
+        "message": "Custom Tree Style Tab Style"
+    },
     "options_fixSidebarStyle": {
         "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab."
     },
-    "options_browserAction_OpenInNewWindow": {
-        "message": "When the browser action is clicked, open the sidebar page in a new window."
+    "options_TreeStyleTabStyle_Info": {
+        "message": "This is the style changes made to Tree Style Tab's sidebar by this extension:"
     },
-    "options_openAfterCurrentTab": {
-        "message": "When the sidebar page is opened in a seperate tab in the current window, it should be placed after the current tab."
+    "options_contextMenu_Root_CustomLabel": {
+        "message": "If there are too many context menu items (usually more than one) then they will be gathered under an item with this name (place a \"&\" symbol before the letter that should be used as the keyboard shortcut) (empty to use default label):"
     },
-    "options_openAsChildOfCurrentTab": {
-        "message": "When the sidebar page is opened in a seperate tab in the current window, it should be a child of the current tab. (The new tab must be placed after the current tab.)"
-    },
-    "options_tab_ContextMenu": {
+    "options_contextMenu_ShowOnTabs": {
         "message": "When a tab is right-clicked, show a context menu option to open the sidebar page in a new tab or window."
     },
-    "options_delayBeforeWindowSeperation": {
+    "options_contextMenu_showItemOnTabs": {
+        "message": "Show this context menu item when a tab is right clicked. (Requires global \"show on tabs\" option.)"
+    },
+    "options_contextMenu_customLabel": {
+        "message": "Custom context menu item label (place a \"&\" symbol before the letter that should be used as the keyboard shortcut) (empty to use default label):"
+    },
+    "options_Commands_Title": {
+        "message": "Keyboard shortcuts"
+    },
+    "options_Commands_Info": {
+        "message": "Select one of the text inputs bellow and then make a keyboard combination such as \"Alt+X\" to bind the keyboard shortcut to the selected text box. You can also press the \"Prompt\" button and manually write down a keyboard shortcut if you prefer. (Keyboard shortcuts require Firefox 60 or later)"
+    },
+    "options_Commands_ResetButton": {
+        "message": "Reset"
+    },
+    "options_Commands_PromptButton": {
+        "message": "Prompt"
+    },
+    "options_Commands_PromptButton_Description": {
+        "message": "Write text representing a keyboard shortcut. For example \"Alt+X\""
+    },
+    "options_pinTabsBeforeMove": {
+        "message": "Pin temporary tabs so that they don't affect scroll position."
+    },
+    "options_pinTabsBeforeMove_OnlyAfterCurrent": {
+        "message": "Only pin temporary tabs when the current tab is pinned."
+    },
+    "options_browserAction_OpenInNewWindow": {
+        "message": "When the browser action (toolbar button) is clicked, open the sidebar page in a new window. Otherwise it is opened as a new tab in the current window."
+    },
+    "options_openAfterCurrentTab": {
+        "message": "When the sidebar page is opened in a separate tab in the current window, it should be placed after the current tab."
+    },
+    "options_openAsChildOfCurrentTab": {
+        "message": "When the sidebar page is opened in a separate tab in the current window, it should be a child of the current tab. (The new tab must be placed after the current tab.)"
+    },
+    "options_delayBeforeWindowSeparation": {
         "message": "When the sidebar page is loaded it takes a little while before it has determined what window it should control. Wait this long before moving the sidebar page's tab to a new window: "
     },
     "options_Milliseconds": {
         "message": "milliseconds."
     },
-    "options_resetCachedTreeStyleTabInternalId": {
-        "message": "Clear cached Tree Style Tab id"
+    "options_TST_InternalId_Reset": {
+        "message": "Reset"
+    },
+    "options_TST_InternalId_ForceUpdate": {
+        "message": "Force Update"
+    },
+    "options_treeStyleTabInternalId": {
+        "message": "Cached internal id for Tree Style Tab (used to open Tree Style Tab's sidebar page in a tab):"
+    },
+    "options_resetSettings": {
+        "message": "Reset Settings"
     },
     "contextMenu_openSettings": {
         "message": "Tree Style Tab in Separate Window Settings"

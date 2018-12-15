@@ -2,6 +2,8 @@
 const kTST_ID = 'treestyletab@piro.sakura.ne.jp';
 
 
+// #region Utilities
+
 async function delay(timeInMilliseconds) {
   return await new Promise((resolve, reject) => timeInMilliseconds < 0 ? resolve() : setTimeout(resolve, timeInMilliseconds));
 }
@@ -25,6 +27,19 @@ async function getPromiseWithResolve() {
   };
 }
 
+let defineProperty = (obj, propertyName, get, set) => {
+  let getSet = {};
+  if (get) {
+    getSet.get = get;
+  }
+  if (set) {
+    getSet.set = set;
+  }
+  Object.defineProperty(obj, propertyName, getSet);
+};
+
+// #endregion Utilities
+
 
 // #region Tree Style Tab
 
@@ -32,8 +47,12 @@ function getSidebarURL(internalId) {
   return 'moz-extension://' + internalId + '/sidebar/sidebar.html';
 }
 
-function getGroupTabURL(name = null, temporary = undefined, internalId = null) {
+function getGroupTabURL({ name = null, temporary = undefined, internalId = null, urlArguments = null } = {}) {
   let url = internalId ? 'moz-extension://' + internalId + '/resources/group-tab.html' : 'about:treestyletab-group';
+  if (urlArguments || urlArguments === '') {
+    url += urlArguments;
+    return url;
+  }
   let firstArg = true;
   let prepareForArg = () => {
     url += firstArg ? '?' : '&';
@@ -84,11 +103,11 @@ function getGroupTabInfo(url) {
     url = removeLength(url, location.length);
   }
 
-  let info = {};
+  let info = {
+    internalId: internalId,
+    urlArguments: url,
+  };
 
-  if (internalId) {
-    info.internalId = internalId;
-  }
 
   if (url.startsWith('?')) {
     url = removeLength(url, 1);
@@ -146,6 +165,101 @@ async function getTabsFromTST(windowId, flatArray = false) {
   }
   return await browser.runtime.sendMessage(kTST_ID, message);
 }
+
+
+let gInternalTSTCaching = null;
+/**
+ * Use Group tabs to get Tree Style Tab's internal id.
+ * 
+ * @param {boolean} [allowCached=true] Get id from cache if available.
+ * @param {boolean} [searchOpenTabs=true] If id is not cached then search open tabs for a TST tab that contains the internal id in its URL.
+ * @param {boolean} [openGroupTab=true] If id is not cached then open a TST group tab that contains the internal id in its URL.
+ * @returns {string} Tree Style Tab's internal id.
+ */
+async function getInternalTSTId({ allowCached = true, searchOpenTabs = true, openGroupTab = true } = {}) {
+  while (gInternalTSTCaching) {
+    let waiting = gInternalTSTCaching;
+    await waiting;
+    if (waiting === gInternalTSTCaching) {
+      gInternalTSTCaching = null;
+    }
+  }
+
+  if (allowCached && settings && settings.treeStyleTabInternalId) {
+    return settings.treeStyleTabInternalId;
+  }
+
+  gInternalTSTCaching = (async () => {
+
+    let internalId;
+
+    // #region Search for open Group Tab
+
+    if (searchOpenTabs) {
+      let allWindows = await browser.windows.getAll();
+
+      for (let window of allWindows) {
+        if (internalId) {
+          break;
+        }
+        try {
+          let tstTabs = await getTabsFromTST(window.id, true);
+          for (let tstTab of tstTabs) {
+            if (tstTab.states.includes('group-tab')) {
+              let groupURLInfo = getGroupTabInfo(tstTab.url);
+              if (groupURLInfo) {
+                internalId = groupURLInfo.internalId;
+                break;
+              }
+            }
+          }
+        } catch (error) { }
+      }
+    }
+
+    // #endregion Search for open Group Tab
+
+
+    // #region Open a new Group Tab
+
+    if (openGroupTab && !internalId) {
+      let tempTab;
+      try {
+        tempTab = await browser.tabs.create({ active: false });
+        try {
+          let groupTab = await browser.runtime.sendMessage(kTST_ID, {
+            type: 'group-tabs',
+            tabs: [tempTab.id]
+          });
+          let groupURLInfo = getGroupTabInfo(groupTab.url);
+          if (groupURLInfo) {
+            internalId = groupURLInfo.internalId;
+          }
+        } catch (error) { }
+      } finally {
+        if (tempTab) {
+          await browser.tabs.remove(tempTab.id);
+        }
+      }
+    }
+
+    // #endregion Open a new Group Tab
+
+
+    if (!internalId) {
+      return null;
+    }
+    browser.storage.local.set({ treeStyleTabInternalId: internalId });
+    if (settings) {
+      settings.treeStyleTabInternalId = internalId;
+    }
+
+    return internalId;
+  })();
+
+  return gInternalTSTCaching;
+}
+
 // #endregion Tree Style Tab
 
 
@@ -155,14 +269,31 @@ function getDefaultSettings() {
   return {
     treeStyleTabInternalId: null,
 
-    
+
     fixSidebarStyle: true,
-    
+
+
+
+    contextMenu_Root_CustomLabel: '',
+    contextMenu_ShowOnTabs: false,
+
+    contextMenu_OpenSidebarInTab_ShowOnTabs: true,
+    contextMenu_OpenSidebarInTab_CustomLabel: '',
+
+    contextMenu_OpenSidebarInWindow_ShowOnTabs: true,
+    contextMenu_OpenSidebarInWindow_CustomLabel: '',
+
+    contextMenu_OpenSettings_ShowOnTabs: true,
+    contextMenu_OpenSettings_CustomLabel: '',
+
+
+
     browserAction_OpenInNewWindow: true,
 
+    pinTabsBeforeMove: true,
+    pinTabsBeforeMove_OnlyAfterCurrent: true,
     openAfterCurrentTab: true,
     openAsChildOfCurrentTab: false,
-    tab_ContextMenu: false,
     delayBeforeWindowSeperationInMilliseconds: 500,
   };
 }
@@ -211,4 +342,3 @@ let settingsLoaded = browser.storage.local.get(null).then((value) => {
 });
 
 // #endregion Settings
-
