@@ -6,20 +6,6 @@
 
 <body>
     <div>
-        <div class="sectionArea collapsed">
-            <header id="styleHeader" class="message_options_section_TreeStyleTabStyle"></header>
-
-            <label>
-                <input id="fixSidebarStyle" type="checkbox">
-                <text class="message_options_fixSidebarStyle"></text>
-            </label>
-            <br />
-            <br />
-
-            <label class="message_options_TreeStyleTabStyle_Info"></label>
-            <br />
-            <textarea id="currentTreeStyleTabStyle" style="width: 100%;" rows=15 readonly=true></textarea>
-        </div>
 
         <div class="sectionArea collapsed">
             <header class="message_options_section_ContextMenu"></header>
@@ -40,11 +26,12 @@
             <div class="sectionArea collapsed">
                 <header class="message_contextMenu_openSidebarInTab"></header>
 
-                <label class="requires_contextMenu_ShowOnTabs">
-                    <input id="contextMenu_OpenSidebarInTab_ShowOnTabs" type="checkbox">
-                    <text class="message_options_contextMenu_showItemOnTabs"></text>
-                </label>
-                <br />
+                <div class="requires_contextMenu_ShowOnTabs">
+                    <label>
+                        <input id="contextMenu_OpenSidebarInTab_ShowOnTabs" type="checkbox">
+                        <text class="message_options_contextMenu_showItemOnTabs"></text>
+                    </label>
+                </div>
                 <br />
 
                 <div>
@@ -56,11 +43,12 @@
             <div class="sectionArea collapsed">
                 <header class="message_contextMenu_openSidebarInWindow"></header>
 
-                <label class="requires_contextMenu_ShowOnTabs">
-                    <input id="contextMenu_OpenSidebarInWindow_ShowOnTabs" type="checkbox">
-                    <text class="message_options_contextMenu_showItemOnTabs"></text>
-                </label>
-                <br />
+                <div class="requires_contextMenu_ShowOnTabs">
+                    <label>
+                        <input id="contextMenu_OpenSidebarInWindow_ShowOnTabs" type="checkbox">
+                        <text class="message_options_contextMenu_showItemOnTabs"></text>
+                    </label>
+                </div>
                 <br />
 
                 <div>
@@ -70,13 +58,31 @@
             </div>
 
             <div class="sectionArea collapsed">
+                <header class="message_contextMenu_openSidebarInDockedWindow"></header>
+
+                <div class="requires_contextMenu_ShowOnTabs">
+                    <label>
+                        <input id="contextMenu_OpenSidebarInDockedWindow_ShowOnTabs" type="checkbox">
+                        <text class="message_options_contextMenu_showItemOnTabs"></text>
+                    </label>
+                </div>
+                <br />
+
+                <div>
+                    <label class="message_options_contextMenu_customLabel"></label>
+                    <input id="contextMenu_OpenSidebarInDockedWindow_CustomLabel" type="text">
+                </div>
+            </div>
+
+            <div class="sectionArea collapsed">
                 <header class="message_contextMenu_openSettings"></header>
 
-                <label class="requires_contextMenu_ShowOnTabs">
-                    <input id="contextMenu_OpenSettings_ShowOnTabs" type="checkbox">
-                    <text class="message_options_contextMenu_showItemOnTabs"></text>
-                </label>
-                <br />
+                <div class="requires_contextMenu_ShowOnTabs">
+                    <label>
+                        <input id="contextMenu_OpenSettings_ShowOnTabs" type="checkbox">
+                        <text class="message_options_contextMenu_showItemOnTabs"></text>
+                    </label>
+                </div>
                 <br />
 
                 <div>
@@ -90,26 +96,40 @@
         <div id="commandsArea"></div>
         <br />
 
-        <label>
-            <input id="browserAction_OpenInNewWindow" type="checkbox">
-            <text class="message_options_browserAction_OpenInNewWindow"></text>
-        </label>
-        <br />
+        <div class="area">
+            <div>
+                <label>
+                    <input id="browserAction_OpenInNewWindow" type="checkbox">
+                    <text class="message_options_browserAction_OpenInNewWindow"></text>
+                </label>
+            </div>
+            <br />
+
+            <div class="requires_browserAction_OpenInNewWindow">
+                <label>
+                    <input id="browserAction_OpenInNewWindow_Docked" type="checkbox">
+                    <text class="message_options_newWindow_Docked"></text>
+                </label>
+            </div>
+        </div>
         <br />
         <br />
 
         <div class="area">
-            <label>
-                <input id="pinTabsBeforeMove" type="checkbox">
-                <text class="message_options_pinTabsBeforeMove"></text>
-            </label>
+            <div>
+                <label>
+                    <input id="pinTabsBeforeMove" type="checkbox">
+                    <text class="message_options_pinTabsBeforeMove"></text>
+                </label>
+            </div>
             <br />
-            <br />
-            <label class="requires_pinTabsBeforeMove">
-                <input id="pinTabsBeforeMove_OnlyAfterCurrent" type="checkbox">
-                <text class="message_options_pinTabsBeforeMove_OnlyAfterCurrent"></text>
-            </label>
-            <br />
+
+            <div class="requires_pinTabsBeforeMove">
+                <label>
+                    <input id="pinTabsBeforeMove_OnlyAfterCurrent" type="checkbox">
+                    <text class="message_options_pinTabsBeforeMove_OnlyAfterCurrent"></text>
+                </label>
+            </div>
         </div>
         <br />
 
@@ -121,11 +141,12 @@
             <br />
             <br />
 
-            <label class="requires_openAfterCurrentTab">
-                <input id="openAsChildOfCurrentTab" type="checkbox">
-                <text class="message_options_openAsChildOfCurrentTab"></text>
-            </label>
-            <br />
+            <div class="requires_openAfterCurrentTab">
+                <label>
+                    <input id="openAsChildOfCurrentTab" type="checkbox">
+                    <text class="message_options_openAsChildOfCurrentTab"></text>
+                </label>
+            </div>
         </div>
         <br />
 
@@ -135,6 +156,140 @@
             <span class="message_options_Milliseconds"></span>
         </p>
         <br />
+
+
+        <div class="sectionArea collapsed">
+            <header id="windowSettingsHeader" class="message_options_section_NewWindowSettings"></header>
+
+            <div>
+                <label>
+                    <input id="newWindow_popup" type="checkbox">
+                    <text class="message_options_newWindow_popup"></text>
+                </label>
+            </div>
+            <br />
+
+            <div class="area">
+
+                <div>
+                    <label>
+                        <input id="newWindow_besideCurrentWindow" type="checkbox">
+                        <text class="message_options_newWindow_besideCurrentWindow"></text>
+                    </label>
+                </div>
+
+                <p class="requires_newWindow_besideCurrentWindow">
+                    <span class="message_options_newWindow_besideCurrentWindow_spaceBetween"></span>
+                    <input id="newWindow_besideCurrentWindow_spaceBetween" type="number">
+                    <span class="message_options_Pixels"></span>
+                </p>
+
+
+                <div class="area requires_newWindow_besideCurrentWindow">
+
+                    <p>
+                        <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_slowInterval"></span>
+                        <input id="newWindow_besideCurrentWindow_simulateDocking_slowInterval" type="number" min="-1">
+                        <span class="message_options_Milliseconds"></span>
+                    </p>
+
+                    <p class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                        <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
+                        <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number" min="-1">
+                        <span class="message_options_Milliseconds"></span>
+                    </p>
+
+                    <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                        <label>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
+                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_minimize"></text>
+                        </label>
+                    </div>
+                    <br />
+
+                    <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                        <label>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose" type="checkbox">
+                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoClose"></text>
+                        </label>
+                    </div>
+                    <br />
+
+                    <div class="area">
+                        <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoFocus"></text>
+                            </label>
+                        </div>
+                        <br />
+
+                        <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_refocusParent"></text>
+                            </label>
+                        </div>
+                    </div>
+                    <br />
+
+                    <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                        <label>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight" type="checkbox">
+                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_syncHeight"></text>
+                        </label>
+                    </div>
+                    <br />
+
+                    <div class="area requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
+                        <div>
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight"></text>
+                            </label>
+                        </div>
+                        <br />
+
+                        <p class="requires_newWindow_besideCurrentWindow_simulateDocking_tileHeight">
+                            <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"></span>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin" type="number">
+                            <span class="message_options_Pixels"></span>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+            <br />
+
+
+            <p>
+                <span class="message_options_newWindow_width"></span>
+                <input id="newWindow_width" type="number" min="-1">
+                <span class="message_options_Pixels"></span>
+            </p>
+
+            <p>
+                <span class="message_options_newWindow_height"></span>
+                <input id="newWindow_height" type="number" min="-1">
+                <span class="message_options_Pixels"></span>
+            </p>
+        </div>
+
+        <div class="sectionArea collapsed">
+            <header id="styleHeader" class="message_options_section_TreeStyleTabStyle"></header>
+
+            <div>
+                <label>
+                    <input id="fixSidebarStyle" type="checkbox">
+                    <text class="message_options_fixSidebarStyle"></text>
+                </label>
+            </div>
+            <br />
+
+            <label class="message_options_TreeStyleTabStyle_Info"></label>
+            <br />
+            <textarea id="currentTreeStyleTabStyle" style="width: 100%;" rows=15 readonly=true></textarea>
+        </div>
 
         <div class="sectionArea collapsed">
             <header class="message_options_section_TreeStyleTabId"></header>

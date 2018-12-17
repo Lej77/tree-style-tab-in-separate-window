@@ -43,8 +43,14 @@ function bindElementIdsToSettings(settings, createListeners = true) {
         element[propertyName] = settings[key];
         if (createListeners) {
             element.addEventListener("input", e => {
-                let keyValue = {};
-                keyValue[key] = e.target[propertyName];
+                const keyValue = {};
+                let value = e.target[propertyName];
+                if (element.type === 'number') {
+                    value = parseInt(value);
+                    if (isNaN(value))
+                        return;
+                }
+                keyValue[key] = value;
                 browser.storage.local.set(keyValue);
             });
         }
@@ -387,6 +393,9 @@ function createCommandArea(sectionAnimationInfo = {}) {
         'open-tst-sidebar-in-window': {
             description: 'contextMenu_openSidebarInWindow',
         },
+        'open-tst-sidebar-in-docked-window': {
+            description: 'contextMenu_openSidebarInDockedWindow',
+        }
     };
 
 
@@ -621,13 +630,13 @@ async function initiatePage() {
     {
         let requireObjs = [];
         checkRequired = (affectedObject = null) => {
-            for (let obj of requireObjs) {
+            for (const obj of requireObjs) {
                 if (affectedObject && obj !== affectedObject) {
                     continue;
                 }
-                let changed = obj.checkEnabled();
-                if (affectedObject && changed) {
-                    checkRequired();
+                const changed = obj.checkEnabled();
+                if (changed) {
+                    return checkRequired();
                 }
             }
         };
@@ -647,10 +656,19 @@ async function initiatePage() {
                     const requiredElement = document.getElementById(requireId);
                     let obj = {
                         listener: (e) => {
-                            obj.checkEnabled(obj);
+                            const changed = obj.checkEnabled();
+                            if (changed) {
+                                checkRequired();
+                            }
                         },
                         checkEnabled: () => {
-                            let enabled = requiredElement.checked;
+                            let enabled = false;
+                            if (requiredElement.type === 'checkbox') {
+                                enabled = requiredElement.checked;
+                            } else if (requiredElement.type === 'number') {
+                                let value = parseInt(requiredElement.value);
+                                enabled = !isNaN(value) && value >= 0;
+                            }
                             if (inverted) {
                                 enabled = !enabled;
                             }
@@ -715,6 +733,10 @@ async function initiatePage() {
         }
         if (changes.fixSidebarStyle) {
             updateStyle();
+        }
+        if (changes.browserAction_OpenInNewWindow || changes.browserAction_OpenInNewWindow_Docked) {
+            // Might have been updated from context menu => update ui:
+            handleLoad();
         }
     };
 

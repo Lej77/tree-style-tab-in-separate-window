@@ -283,18 +283,42 @@ function getDefaultSettings() {
     contextMenu_OpenSidebarInWindow_ShowOnTabs: true,
     contextMenu_OpenSidebarInWindow_CustomLabel: '',
 
+    contextMenu_OpenSidebarInDockedWindow_ShowOnTabs: true,
+    contextMenu_OpenSidebarInDockedWindow_CustomLabel: '',
+
     contextMenu_OpenSettings_ShowOnTabs: true,
     contextMenu_OpenSettings_CustomLabel: '',
 
 
 
     browserAction_OpenInNewWindow: true,
+    browserAction_OpenInNewWindow_Docked: true,
+
 
     pinTabsBeforeMove: true,
     pinTabsBeforeMove_OnlyAfterCurrent: true,
     openAfterCurrentTab: true,
     openAsChildOfCurrentTab: false,
     delayBeforeWindowSeperationInMilliseconds: 500,
+
+
+
+    newWindow_popup: true,
+    newWindow_besideCurrentWindow: true,
+    newWindow_besideCurrentWindow_spaceBetween: -13,
+
+    newWindow_besideCurrentWindow_simulateDocking_slowInterval: 1000,
+    newWindow_besideCurrentWindow_simulateDocking_fastInterval: 25,
+    newWindow_besideCurrentWindow_simulateDocking_minimize: true,
+    newWindow_besideCurrentWindow_simulateDocking_autoClose: true,
+    newWindow_besideCurrentWindow_simulateDocking_syncHeight: true,
+    newWindow_besideCurrentWindow_simulateDocking_tileHeight: true,
+    newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin: -8,
+    newWindow_besideCurrentWindow_simulateDocking_autoFocus: true,
+    newWindow_besideCurrentWindow_simulateDocking_refocusParent: true,
+
+    newWindow_width: -1,
+    newWindow_height: -1,
   };
 }
 

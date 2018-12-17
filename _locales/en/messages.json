@@ -8,6 +8,9 @@
     "options_section_TreeStyleTabStyle": {
         "message": "Custom Tree Style Tab Style"
     },
+    "options_section_NewWindowSettings": {
+        "message": "Docked Window Settings"
+    },
     "options_fixSidebarStyle": {
         "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab."
     },
@@ -59,8 +62,56 @@
     "options_delayBeforeWindowSeparation": {
         "message": "When the sidebar page is loaded it takes a little while before it has determined what window it should control. Wait this long before moving the sidebar page's tab to a new window: "
     },
+    "options_newWindow_popup": {
+        "message": "Create the new window without a tab bar. (Might cause some style issues, such as background of pinned tabs area becoming transparent.) (Windows without tab bars can't have sidebars in them.)"
+    },
+    "options_newWindow_besideCurrentWindow": {
+        "message": "Create the new window beside the current window (will un-maximize the current window if needed)."
+    },
+    "options_newWindow_besideCurrentWindow_spaceBetween": {
+        "message": "Space between the created window and the current window (can be negative): "
+    },
+    "options_newWindow_width": {
+        "message": "Width of the created window (-1 for default): "
+    },
+    "options_newWindow_height": {
+        "message": "Height of the created window (-1 for default): "
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_slowInterval": {
+        "message": "Simulate \"docking\" of windows by checking the windows position after a time and then moving them if necessary (-1 to disable): "
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_fastInterval": {
+        "message": "Check the windows positions faster just after a sidebar window needed to be moved. Faster time between checks (-1 to disable): "
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_minimize": {
+        "message": "If parent window is minimized then minimize the sidebar window as well."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_autoClose": {
+        "message": "If parent window is closed and the sidebar window doesn't have more than 1 tab then close the sidebar window as well."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_autoFocus": {
+        "message": "If parent window gets focus then quickly focus docked sidebar windows and then re-focus parent window."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_refocusParent": {
+        "message": "If a docked sidebar window gets focus then quickly focus its parent window."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_syncHeight": {
+        "message": "The sidebar window should have the same height as the parent window."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight": {
+        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed under each other."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin": {
+        "message": "Height margin between windows: "
+    },
+    "options_newWindow_Docked": {
+        "message": "The opened window should be docked to the current window."
+    },
     "options_Milliseconds": {
         "message": "milliseconds."
+    },
+    "options_Pixels": {
+        "message": "pixels."
     },
     "options_TST_InternalId_Reset": {
         "message": "Reset"
@@ -82,5 +133,11 @@
     },
     "contextMenu_openSidebarInWindow": {
         "message": "Open Tree Style Tab Sidebar in a new window"
+    },
+    "contextMenu_openSidebarInDockedWindow": {
+        "message": "Open Tree Style Tab Sidebar in a docked window"
+    },
+    "contextMenu_setDefaultBrowserAction": {
+        "message": "Set Default Action"
     }
 }
