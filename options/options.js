@@ -720,7 +720,7 @@ async function initiatePage() {
     let handleLoad = () => {
         bindElementIdsToSettings(settings, firstLoad);
         checkRequired();
-        update();
+        update(); // Keyboard Commands
         updateStyle();
 
         firstLoad = false;
@@ -728,15 +728,42 @@ async function initiatePage() {
     handleLoad();
 
     handleSettingChanges = (changes, areaName) => {
-        if (changes.treeStyleTabInternalId) {
-            document.getElementById('treeStyleTabInternalId').value = settings.treeStyleTabInternalId;
-        }
         if (changes.fixSidebarStyle) {
             updateStyle();
         }
-        if (changes.browserAction_OpenInNewWindow || changes.browserAction_OpenInNewWindow_Docked) {
+        let syncChange = false;
+        for (const syncedSettings of [
             // Might have been updated from context menu => update ui:
-            handleLoad();
+            'browserAction_OpenInNewWindow',
+            'browserAction_OpenInNewWindow_Docked',
+            // Sync cached id:
+            'treeStyleTabInternalId',
+            // Resize of docked windows might have changed width:
+            {
+                id: 'newWindow_width', enabled: () =>
+                    settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval >= 0 &&
+                    settings.newWindow_besideCurrentWindow_simulateDocking_syncWidth,
+            }
+        ]) {
+            const { id, enabled = true } = typeof syncedSettings === 'string' ? { id: syncedSettings } : syncedSettings;
+            if (!enabled ||
+                (typeof enabled === 'function' && !enabled())
+            ) {
+                console.log('disabled');
+                continue;
+            }
+            if (changes[id]) {
+                const element = document.getElementById(id);
+                let propName = 'value';
+                if (element.type === 'checkbox') {
+                    propName = 'checked';
+                }
+                element[propName] = settings[id];
+                syncChange = true;
+            }
+        }
+        if (syncChange) {
+            checkRequired();
         }
     };
 

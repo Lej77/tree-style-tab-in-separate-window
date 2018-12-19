@@ -183,7 +183,23 @@
                     <input id="newWindow_besideCurrentWindow_spaceBetween" type="number">
                     <span class="message_options_Pixels"></span>
                 </p>
+                <br />
 
+                <div class="area requires_newWindow_besideCurrentWindow">
+                    <div>
+                        <label>
+                            <input id="newWindow_besideCurrentWindow_autoDetectAtStartup" type="checkbox">
+                            <text class="message_options_newWindow_besideCurrentWindow_autoDetectAtStartup"></text>
+                        </label>
+                    </div>
+
+                    <p class="requires_newWindow_besideCurrentWindow_autoDetectAtStartup">
+                        <span class="message_options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation"></span>
+                        <input id="newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation" type="number">
+                        <span class="message_options_Milliseconds"></span>
+                    </p>
+                </div>
+                <br />
 
                 <div class="area requires_newWindow_besideCurrentWindow">
 
@@ -193,70 +209,103 @@
                         <span class="message_options_Milliseconds"></span>
                     </p>
 
-                    <p class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                        <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
-                        <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number" min="-1">
-                        <span class="message_options_Milliseconds"></span>
-                    </p>
-
                     <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                        <label>
-                            <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
-                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_minimize"></text>
-                        </label>
-                    </div>
-                    <br />
 
-                    <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                        <label>
-                            <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose" type="checkbox">
-                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoClose"></text>
-                        </label>
-                    </div>
-                    <br />
-
-                    <div class="area">
-                        <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus" type="checkbox">
-                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoFocus"></text>
-                            </label>
-                        </div>
-                        <br />
-
-                        <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent" type="checkbox">
-                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_refocusParent"></text>
-                            </label>
-                        </div>
-                    </div>
-                    <br />
-
-                    <div class="requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                        <label>
-                            <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight" type="checkbox">
-                            <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_syncHeight"></text>
-                        </label>
-                    </div>
-                    <br />
-
-                    <div class="area requires_newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-                        <div>
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight" type="checkbox">
-                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight"></text>
-                            </label>
-                        </div>
-                        <br />
-
-                        <p class="requires_newWindow_besideCurrentWindow_simulateDocking_tileHeight">
-                            <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"></span>
-                            <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin" type="number">
-                            <span class="message_options_Pixels"></span>
+                        <p class="">
+                            <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number" min="-1">
+                            <span class="message_options_Milliseconds"></span>
                         </p>
-                    </div>
 
+                        <div class="">
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_minimize"></text>
+                            </label>
+                        </div>
+                        <br />
+
+                        <div class="area">
+
+                            <div class="">
+                                <label>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose" type="checkbox">
+                                    <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoClose"></text>
+                                </label>
+                            </div>
+                            <br />
+
+                            <div class="area requires_newWindow_besideCurrentWindow_simulateDocking_autoClose">
+                                <div>
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"
+                                            type="checkbox">
+                                        <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"></text>
+                                    </label>
+                                </div>
+                                <br />
+
+                                <div class="requires_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState">
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"
+                                            type="checkbox">
+                                        <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"></text>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+
+                        <div class="area">
+                            <div class="">
+                                <label>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus" type="checkbox">
+                                    <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_autoFocus"></text>
+                                </label>
+                            </div>
+                            <br />
+
+                            <div class="">
+                                <label>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent" type="checkbox">
+                                    <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_refocusParent"></text>
+                                </label>
+                            </div>
+                        </div>
+                        <br />
+
+                        <div class="">
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_syncHeight"></text>
+                            </label>
+                        </div>
+                        <br />
+
+                        <div class="">
+                            <label>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_syncWidth" type="checkbox">
+                                <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_syncWidth"></text>
+                            </label>
+                        </div>
+                        <br />
+
+                        <div class="area">
+                            <div>
+                                <label>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight" type="checkbox">
+                                    <text class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight"></text>
+                                </label>
+                            </div>
+                            <br />
+
+                            <p class="requires_newWindow_besideCurrentWindow_simulateDocking_tileHeight">
+                                <span class="message_options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"></span>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin" type="number">
+                                <span class="message_options_Pixels"></span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <br />

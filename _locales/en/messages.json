@@ -71,6 +71,12 @@
     "options_newWindow_besideCurrentWindow_spaceBetween": {
         "message": "Space between the created window and the current window (can be negative): "
     },
+    "options_newWindow_besideCurrentWindow_autoDetectAtStartup": {
+        "message": "Attempt to auto detect docked sidebar windows at extension startup."
+    },
+    "options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation": {
+        "message": "At startup performance might be worse and therefore it might take longer for sidebar pages to load. Time to wait before moving a sidebar page's tab to a new window at startup: "
+    },
     "options_newWindow_width": {
         "message": "Width of the created window (-1 for default): "
     },
@@ -89,6 +95,12 @@
     "options_newWindow_besideCurrentWindow_simulateDocking_autoClose": {
         "message": "If parent window is closed and the sidebar window doesn't have more than 1 tab then close the sidebar window as well."
     },
+    "options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState": {
+        "message": "Before the last docked sidebar window is closed it should be set to its parent windows last size. This ensures that new windows opened have a good default size."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow": {
+        "message": "Only when closing the last open window in the browser session."
+    },
     "options_newWindow_besideCurrentWindow_simulateDocking_autoFocus": {
         "message": "If parent window gets focus then quickly focus docked sidebar windows and then re-focus parent window."
     },
@@ -97,6 +109,9 @@
     },
     "options_newWindow_besideCurrentWindow_simulateDocking_syncHeight": {
         "message": "The sidebar window should have the same height as the parent window."
+    },
+    "options_newWindow_besideCurrentWindow_simulateDocking_syncWidth": {
+        "message": "All sidebar windows should have the same width. (This will sync the width of all docked sidebar windows to the \"Width of the created window\" setting. So each time a docked sidebar window is resized the setting will be changed and if the setting is changed then the docked sidebar windows will be resized.)"
     },
     "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight": {
         "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed under each other."

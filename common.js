@@ -5,7 +5,33 @@ const kTST_ID = 'treestyletab@piro.sakura.ne.jp';
 // #region Utilities
 
 async function delay(timeInMilliseconds) {
-  return await new Promise((resolve, reject) => timeInMilliseconds < 0 ? resolve() : setTimeout(resolve, timeInMilliseconds));
+  return new Promise((resolve, reject) => timeInMilliseconds < 0 ? resolve() : setTimeout(resolve, timeInMilliseconds));
+}
+
+let customWaitTimeoutIds = [];
+async function trackedDelay(timeInMilliseconds) {
+  if (timeInMilliseconds < 500) {
+    return delay(timeInMilliseconds);
+  } else {
+    let timeoutId = null;
+    return new Promise((resolve, reject) => {
+      timeoutId = setTimeout(() => {
+        let index = customWaitTimeoutIds.map(item => item.timeoutId).indexOf(timeoutId);
+        if (index >= 0) {
+          customWaitTimeoutIds.splice(index, 1);
+        }
+        resolve();
+      }, timeInMilliseconds);
+      customWaitTimeoutIds.push({ timeoutId, resolve });
+    });
+  }
+}
+function clearTrackedDelays() {
+  for (let { timeoutId, resolve } of customWaitTimeoutIds) {
+    clearTimeout(timeoutId);
+    resolve();
+  }
+  customWaitTimeoutIds = [];
 }
 
 async function getPromiseWithResolve() {
@@ -273,7 +299,7 @@ function getDefaultSettings() {
     fixSidebarStyle: true,
 
 
-
+    // Context Menu:
     contextMenu_Root_CustomLabel: '',
     contextMenu_ShowOnTabs: false,
 
@@ -290,7 +316,7 @@ function getDefaultSettings() {
     contextMenu_OpenSettings_CustomLabel: '',
 
 
-
+    // Browser action:
     browserAction_OpenInNewWindow: true,
     browserAction_OpenInNewWindow_Docked: true,
 
@@ -303,20 +329,40 @@ function getDefaultSettings() {
 
 
 
+    // Window state:
     newWindow_popup: true,
+
+    // Window as docked sidebar:
     newWindow_besideCurrentWindow: true,
     newWindow_besideCurrentWindow_spaceBetween: -13,
 
+    // Auto detect docked sidebars:
+    newWindow_besideCurrentWindow_autoDetectAtStartup: true,
+    newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation: 2000,
+
+    // Window sync update rate:
     newWindow_besideCurrentWindow_simulateDocking_slowInterval: 1000,
     newWindow_besideCurrentWindow_simulateDocking_fastInterval: 25,
+
+    // Sync state:
     newWindow_besideCurrentWindow_simulateDocking_minimize: true,
     newWindow_besideCurrentWindow_simulateDocking_autoClose: true,
+    newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState: true,
+    newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow: true,
+
+    // Sync size:
+    newWindow_besideCurrentWindow_simulateDocking_syncWidth: true,
     newWindow_besideCurrentWindow_simulateDocking_syncHeight: true,
+
+    // Layout of multiple sidebar windows:
     newWindow_besideCurrentWindow_simulateDocking_tileHeight: true,
     newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin: -8,
+
+    // Override focus:
     newWindow_besideCurrentWindow_simulateDocking_autoFocus: true,
     newWindow_besideCurrentWindow_simulateDocking_refocusParent: true,
 
+    // Window size:
     newWindow_width: -1,
     newWindow_height: -1,
   };
