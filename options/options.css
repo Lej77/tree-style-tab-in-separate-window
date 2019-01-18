@@ -21,7 +21,7 @@ body {
 .area:not(.noPadding) {
     padding: 10px;
 }
-.area:not(.noMargin) {    
+.area:not(.noMargin) {
     margin: 3px;
 }
 
@@ -44,10 +44,13 @@ input[type="text"] {
 }
 
 
+.requiresAny,
 .disabled {
     opacity: 0.6;
 }
-
+*:not(.disabled) ~ .requiresAny {
+    opacity: 1;
+}
 
 
 /* #region Collapsable Section */

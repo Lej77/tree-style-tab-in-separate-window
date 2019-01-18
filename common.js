@@ -328,15 +328,16 @@ function getDefaultSettings() {
     delayBeforeWindowSeperationInMilliseconds: 500,
 
 
-
     // Window state:
     newWindow_popup: true,
+    newWindow_popup_hidden: true,
 
     // Window as docked sidebar:
     newWindow_besideCurrentWindow: true,
     newWindow_besideCurrentWindow_spaceBetween: -13,
 
-    // Auto detect docked sidebars:
+    // Auto detect/open docked sidebars at startup:
+    newWindow_besideCurrentWindow_autoOpenAtStartup: false,
     newWindow_besideCurrentWindow_autoDetectAtStartup: true,
     newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation: 2000,
 

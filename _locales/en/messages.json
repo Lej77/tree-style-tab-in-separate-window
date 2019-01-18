@@ -11,6 +11,39 @@
     "options_section_NewWindowSettings": {
         "message": "Docked Window Settings"
     },
+    "options_legend_SidebarTarget": {
+        "message": "Sidebar page location"
+    },
+    "options_legend_PinWorkaround": {
+        "message": "Pin temporary tabs"
+    },
+    "options_legend_TabPosition": {
+        "message": "Tab position"
+    },
+    "options_legend_window_WindowType": {
+        "message": "Window type"
+    },
+    "options_legend_window_BesideCurrentWindow": {
+        "message": "Open beside current window"
+    },
+    "options_legend_window_StartupDetection": {
+        "message": "Auto detect & open sidebar windows at startup"
+    },
+    "options_legend_window_SimulateDocking": {
+        "message": "Simulate docking"
+    },
+    "options_legend_window_AutoClose": {
+        "message": "Auto close sidebar windows"
+    },
+    "options_legend_window_AutoClose_FixDefaultWindowSize": {
+        "message": "Workaround for default window size"
+    },
+    "options_legend_window_WindowFocus": {
+        "message": "Window focus"
+    },
+    "options_legend_window_MultipleSidebarWindows": {
+        "message": "Multiple sidebar windows"
+    },
     "options_fixSidebarStyle": {
         "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab."
     },
@@ -65,17 +98,23 @@
     "options_newWindow_popup": {
         "message": "Create the new window without a tab bar. (Might cause some style issues, such as background of pinned tabs area becoming transparent.) (Windows without tab bars can't have sidebars in them.)"
     },
+    "options_newWindow_popup_hidden": {
+        "message": "The sidebar window should only be accessible to this extension."
+    },
     "options_newWindow_besideCurrentWindow": {
         "message": "Create the new window beside the current window (will un-maximize the current window if needed)."
     },
     "options_newWindow_besideCurrentWindow_spaceBetween": {
         "message": "Space between the created window and the current window (can be negative): "
     },
+    "options_newWindow_besideCurrentWindow_autoOpenAtStartup": {
+        "message": "Auto open a sidebar window for each window when the browser is started."
+    },
     "options_newWindow_besideCurrentWindow_autoDetectAtStartup": {
         "message": "Attempt to auto detect docked sidebar windows at extension startup."
     },
     "options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation": {
-        "message": "At startup performance might be worse and therefore it might take longer for sidebar pages to load. Time to wait before moving a sidebar page's tab to a new window at startup: "
+        "message": "Performance might be worse at startup and therefore it might take longer for sidebar pages to load. Time to wait before moving a sidebar page's tab to a new window at startup: "
     },
     "options_newWindow_width": {
         "message": "Width of the created window (-1 for default): "

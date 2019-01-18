@@ -1,6 +1,6 @@
 
-const messagePrefix = 'message_';
-const requiresPrefix = 'requires_';
+const messagePrefix = 'message-';
+const requiresPrefix = 'requires-';
 
 
 function setTextMessages(elementsToText = null) {
@@ -42,7 +42,7 @@ function bindElementIdsToSettings(settings, createListeners = true) {
 
         element[propertyName] = settings[key];
         if (createListeners) {
-            element.addEventListener("input", e => {
+            element.addEventListener('input', e => {
                 const keyValue = {};
                 let value = e.target[propertyName];
                 if (element.type === 'number') {
@@ -595,14 +595,83 @@ function createCommandArea(sectionAnimationInfo = {}) {
 
 
 
-async function initiatePage() {
-    setTextMessages();
 
+function bindDependantSettings() {
+    const requireObjs = [];
+    const checkRequired = (affectedObject = null) => {
+        for (const obj of requireObjs) {
+            if (affectedObject && obj !== affectedObject) {
+                continue;
+            }
+            const changed = obj.checkEnabled();
+            if (changed) {
+                return checkRequired();
+            }
+        }
+    };
 
-    // #region Bind collapsable areas
+    const requireAreas = Array.from(document.querySelectorAll(`*[class*='${requiresPrefix}']`));
+    for (const ele of requireAreas) {
+        for (const c of ele.classList) {
+            if (c.length > requiresPrefix.length && c.startsWith(requiresPrefix)) {
+                let requireId = c.substring(requiresPrefix.length);
+                let inverted = false;
+                if (requireId.startsWith('!')) {
+                    requireId = requireId.slice(1);
+                    inverted = true;
+                }
 
-    let animationInfo = { standard: false };
-    let sectionAreas = document.querySelectorAll(`.sectionArea`);
+                const requiredElement = document.getElementById(requireId);
+                let obj = {
+                    listener: (e) => {
+                        const changed = obj.checkEnabled();
+                        if (changed) {
+                            checkRequired();
+                        }
+                    },
+                    checkEnabled: () => {
+                        let enabled = false;
+                        if (requiredElement.type === 'checkbox') {
+                            enabled = requiredElement.checked;
+                        } else if (requiredElement.type === 'number') {
+                            let value = parseInt(requiredElement.value);
+                            enabled = !isNaN(value) && value >= 0;
+                        }
+                        if (inverted) {
+                            enabled = !enabled;
+                        }
+                        let eleToCheck = requiredElement;
+                        while (eleToCheck) {
+                            if (enabled) {
+                                break;
+                            }
+                            if (eleToCheck.classList.contains('disabled')) {
+                                enabled = true;
+                            }
+                            eleToCheck = eleToCheck.parentElement;
+                        }
+
+                        const was = ele.classList.contains('disabled');
+                        if (was !== !enabled) {
+                            toggleClass(ele, 'disabled', !enabled);
+                            return true;
+                        }
+                        return false;
+                    },
+                };
+                requireObjs.push(obj);
+                requiredElement.addEventListener('input', obj.listener);
+
+                break;
+            }
+        }
+    }
+    return checkRequired;
+}
+
+function bindCollapsableAreas() {
+    const animationInfo = { standard: false };
+    const sectionAreas = document.querySelectorAll(`.sectionArea`);
     for (let area of sectionAreas) {
         let section = createCollapsableArea(animationInfo);
         section.isCollapsed = area.classList.contains('collapsed');
@@ -620,90 +689,18 @@ async function initiatePage() {
         }
     }
     animationInfo.update({ standard: true });
-
-    // #endregion Bind collapsable areas
-
-
-    // #region Bind dependant settings
-
-    let checkRequired;
-    {
-        let requireObjs = [];
-        checkRequired = (affectedObject = null) => {
-            for (const obj of requireObjs) {
-                if (affectedObject && obj !== affectedObject) {
-                    continue;
-                }
-                const changed = obj.checkEnabled();
-                if (changed) {
-                    return checkRequired();
-                }
-            }
-        };
-
-        let requireAreas = Array.from(document.querySelectorAll(`*[class*='${requiresPrefix}']`));
-        for (let i = 0; i < requireAreas.length; i++) {
-            let ele = requireAreas[i];
-            for (let c of ele.classList) {
-                if (c.length > requiresPrefix.length && c.startsWith(requiresPrefix)) {
-                    let requireId = c.substring(requiresPrefix.length);
-                    let inverted = false;
-                    if (requireId.startsWith('!')) {
-                        requireId = requireId.slice(1);
-                        inverted = true;
-                    }
-
-                    const requiredElement = document.getElementById(requireId);
-                    let obj = {
-                        listener: (e) => {
-                            const changed = obj.checkEnabled();
-                            if (changed) {
-                                checkRequired();
-                            }
-                        },
-                        checkEnabled: () => {
-                            let enabled = false;
-                            if (requiredElement.type === 'checkbox') {
-                                enabled = requiredElement.checked;
-                            } else if (requiredElement.type === 'number') {
-                                let value = parseInt(requiredElement.value);
-                                enabled = !isNaN(value) && value >= 0;
-                            }
-                            if (inverted) {
-                                enabled = !enabled;
-                            }
-                            let eleToCheck = requiredElement;
-                            while (eleToCheck) {
-                                if (enabled) {
-                                    break;
-                                }
-                                if (eleToCheck.classList.contains('disabled')) {
-                                    enabled = true;
-                                }
-                                eleToCheck = eleToCheck.parentElement;
-                            }
-
-                            let was = ele.classList.contains('disabled');
-                            if (was !== !enabled) {
-                                toggleClass(ele, 'disabled', !enabled);
-                                return true;
-                            }
-                            return false;
-                        },
-                    };
-                    requireObjs.push(obj);
-                    requiredElement.addEventListener('input', obj.listener);
-
-                    break;
-                }
-            }
-        }
-    }
-
-    // #endregion Bind dependant settings
+}
 
 
-    const { area, update } = createCommandArea(animationInfo);
+async function initiatePage() {
+    setTextMessages();
+
+
+    bindCollapsableAreas();
+    const checkRequired = bindDependantSettings();
+
+
+    const { area, update } = createCommandArea();
     document.getElementById('commandsArea').appendChild(area);
 
     const styleHeader = document.getElementById('styleHeader');
