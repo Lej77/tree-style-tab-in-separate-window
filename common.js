@@ -338,7 +338,7 @@ function getDefaultSettings() {
 
     // Auto detect/open docked sidebars at startup:
     newWindow_besideCurrentWindow_autoOpenAtStartup: false,
-    newWindow_besideCurrentWindow_autoDetectAtStartup: true,
+    newWindow_besideCurrentWindow_autoDetectAtStartup: false,
     newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation: 2000,
 
     // Window sync update rate:

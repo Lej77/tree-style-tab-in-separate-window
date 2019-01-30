@@ -1115,7 +1115,7 @@ settingsLoaded.finally(async () => {
 
         // #region Find Sidebar Windows
 
-        const windowsWithOneTab = allWindows.filter(window => window.tabs.length <= 1);
+        const windowsWithOneTab = allWindows.filter(window => window.tabs.length === 1);
         if (windowsWithOneTab.length > 0) {
           // Wait for TST to start:
           await new Promise((resolve, reject) => {
@@ -1154,7 +1154,7 @@ settingsLoaded.finally(async () => {
         let sidebarURL = tstInternalId && windowsWithTSTInfo.length > 0 ? getSidebarURL(tstInternalId) : null;
 
         // Determine which windows are sidebar windows:
-        const sidebarWindows = await Promise.all(windowsWithTSTInfo.map(async ([window, tstTabs]) => {
+        const sidebarWindows = await (Promise.all(windowsWithTSTInfo.map(async ([window, tstTabs]) => {
           if (tstTabs) {
             if (!sidebarURL) {
               sidebarURL = getSidebarURL(await getInternalTSTId());
@@ -1169,7 +1169,7 @@ settingsLoaded.finally(async () => {
           }
           // Assume this window is a sidebar window:
           return true;
-        })).then(filter => windowsWithTSTInfo.filter((value, index) => filter[index]));
+        })).then(filter => windowsWithTSTInfo.filter((value, index) => filter[index])));
 
 
         const sidebarWindowIds = sidebarWindows.map(([window, tstTabs]) => window.id);

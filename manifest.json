@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Tree Style Tab in Separate Window",
-  "version": "3.2",
+  "version": "3.3",
   "applications": {
     "gecko": {
       "id": "{ad983116-67d4-49d3-85ff-e7f46ab73dac}",
