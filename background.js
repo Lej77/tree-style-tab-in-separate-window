@@ -1018,7 +1018,7 @@ settingsLoaded.finally(async () => {
 
         // #region Get Startup info
 
-        const [
+        let [
           allWindows,
           browserStartup,
           tstInternalId,
@@ -1108,6 +1108,8 @@ settingsLoaded.finally(async () => {
               resolve();
             }
           });
+
+          allWindows = browser.windows.getAll({ populate: true });
         }
 
         // #endregion Get Startup info

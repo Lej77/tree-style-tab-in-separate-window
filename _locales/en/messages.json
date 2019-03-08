@@ -179,6 +179,9 @@
     "options_resetSettings": {
         "message": "Reset Settings"
     },
+    "options_resetSettings_Prompt": {
+        "message": "Do you want to reset all settings to default values?"
+    },
     "contextMenu_openSettings": {
         "message": "Tree Style Tab in Separate Window Settings"
     },
