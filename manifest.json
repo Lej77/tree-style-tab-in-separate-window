@@ -1,26 +1,24 @@
 {
   "manifest_version": 2,
   "name": "Tree Style Tab in Separate Window",
-  "version": "3.4",
+  "version": "4.0",
   "applications": {
     "gecko": {
       "id": "{ad983116-67d4-49d3-85ff-e7f46ab73dac}",
-      "strict_min_version": "57.0"
+      "strict_min_version": "60.0"
     }
   },
   "default_locale": "en",
   "permissions": [
     "storage",
-    "menus"
+    "menus",
+    "notifications"
   ],
   "options_ui": {
     "page": "options/options.html"
   },
   "background": {
-    "scripts": [
-      "common.js",
-      "background.js"
-    ]
+    "page": "background/background.html"
   },
   "browser_action": {
     "default_icon": {
@@ -41,8 +39,14 @@
     ]
   },
   "commands": {
-    "open-tst-sidebar-in-tab": {},
-    "open-tst-sidebar-in-window": {},
-    "open-tst-sidebar-in-docked-window": {}
+    "open-tst-sidebar-in-tab": {
+      "description": "__MSG_contextMenu_openSidebarInTab__"
+    },
+    "open-tst-sidebar-in-window": {
+      "description": "__MSG_contextMenu_openSidebarInWindow__"
+    },
+    "open-tst-sidebar-in-docked-window": {
+      "description": "__MSG_contextMenu_openSidebarInDockedWindow__"
+    }
   }
 }

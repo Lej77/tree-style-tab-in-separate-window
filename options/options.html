@@ -1,6 +1,5 @@
 <head>
     <meta charset="utf-8">
-    <script type="application/javascript" src="/common.js"></script>
     <link rel="stylesheet" type="text/css" href="options.css">
 </head>
 
@@ -385,6 +384,19 @@
 
         <div class="sectionArea collapsed">
             <header class="message-options_section_TreeStyleTabId"></header>
+            
+            <label class="message-options_treeStyleTabInternalId_info textSelectable"></label>
+            <br />
+            <br />
+            
+            
+            <label>
+                <input id="requestTreeStyleTabPermission_tabs" type="checkbox">
+                <text class="message-options_requestTreeStyleTabPermission_tabs"></text>
+            </label>
+            <br />
+            <br />
+            
             <div>
                 <label class="message-options_treeStyleTabInternalId"></label>
                 <input id="treeStyleTabInternalId" type="text">
@@ -398,7 +410,7 @@
 
         <button id="resetSettingsButton" class="message-options_resetSettings"></button>
     </div>
-    <script src="options.js"></script>
+    <script type="module" src="options.js"></script>
 </body>
 
 </html>

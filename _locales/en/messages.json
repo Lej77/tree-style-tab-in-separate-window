@@ -173,6 +173,12 @@
     "options_TST_InternalId_ForceUpdate": {
         "message": "Force Update"
     },
+    "options_treeStyleTabInternalId_info": {
+        "message": "An extension's internal id is randomized every time the extension is installed, but remains the same when the extension is updated. The \"about:debugging#addons\" page can be used to find an extension's internal id. The internal id is for example used as part of the URL for an extension's web pages."
+    },
+    "options_requestTreeStyleTabPermission_tabs": {
+        "message": "Request \"tabs\" permission from Tree Style Tab. If this permission is granted then Tree Style Tab's internal id can be automatically determined. This is accomplished by using Tree Style Tab's API to open a group tab, then getting that tab's URL from Tree Style Tab and finally parsing the group tab's URL to find the internal id."
+    },
     "options_treeStyleTabInternalId": {
         "message": "Cached internal id for Tree Style Tab (used to open Tree Style Tab's sidebar page in a tab):"
     },
@@ -196,5 +202,12 @@
     },
     "contextMenu_setDefaultBrowserAction": {
         "message": "Set Default Action"
+    },
+    "permissions_required_notification_title": {
+        "message": "Can't determine Tree Style Tab's internal id"
+    },
+    "permissions_required_notification_message": {
+        "message": "You can enter the id in the option's page or you can temporarily grant the \"tabs\" permission from:\nTree Style Tab's option page\nunder:\n\"Advanced\"\nin:\n\"Permissions for API Call from Other Addons\"",
+        "description": "This text is shown in a notification. The notification has a character limit after which the text is not shown."
     }
 }

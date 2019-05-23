@@ -1,3 +1,43 @@
+'use strict';
+
+import {
+  getPromiseWithResolve,
+} from '../common/utilities.js';
+
+import {
+  delay,
+} from '../common/delays.js';
+
+import {
+  settings,
+  settingsTracker,
+  trackedDelay,
+  cancelAllTrackedDelays,
+} from '../common/common.js';
+
+import {
+  kTST_ID,
+  getTabsFromTST,
+  pingTST,
+  unregisterFromTST,
+} from '../tree-style-tab/utilities.js';
+
+import {
+  getInternalTSTId,
+  getSidebarURL,
+} from '../tree-style-tab/internal-id.js';
+
+import {
+  addTrackedWindow,
+  isDockedWindow,
+  isParentWindow,
+  checkSimulateDocking,
+} from '../background/simulate-docking.js';
+import { SettingsTracker } from '../common/settings.js';
+
+import {
+  showBasicNotification,
+} from '../common/notifications.js';
 
 
 // #region Context Menu
@@ -184,14 +224,6 @@ async function updateContextMenu() {
 
 // #region Tree Style Tab
 
-async function pingTST() {
-  try {
-    await browser.runtime.sendMessage(kTST_ID, { type: 'ping' });
-  } catch (error) { return false; }
-  return true;
-}
-
-
 function getTSTStyle() {
   let style = '';
   if (settings.fixSidebarStyle) {
@@ -219,15 +251,15 @@ async function registerToTST() {
   try {
     await unregisterFromTST();  // Remove any style currently present.
 
-    if (!settings.fixSidebarStyle) {
-      return true;  // No need to register.
-    }
-
-    let registrationDetails = {
+    const registrationDetails = {
       type: 'register-self',
       name: browser.runtime.getManifest().name,
       listeningTypes: ['ready'],
     };
+
+    if (settings.requestTreeStyleTabPermission_tabs) {
+      registrationDetails.permissions = ["tabs"];
+    }
 
 
     // #region Style
@@ -244,378 +276,32 @@ async function registerToTST() {
   return true;
 }
 
-async function unregisterFromTST() {
-  try {
-    await browser.runtime.sendMessage(kTST_ID, {
-      type: 'unregister-self'
-    });
-  }
-  catch (e) {
-    // TST is not available
-    return false;
-  }
-  return true;
-}
-
 // #endregion Tree Style Tab
 
 
-// #region Simulate docked window
+/**
+ * Show a notification that Tree Style Tab's internal id couldn't be determined.
+ *
+ * @export
+ * @returns {Promise<string>} The id of the notification or `null` if no notification was shown.
+ */
+async function handleFailedToDetermineTreeStyleTabInternalId() {
+  if (!await pingTST()) return null;
 
-let openSidebarWindows = [];
-let simulateDockingIntervalId = null;
-let simulateDockingInterval = 0;
-let hasWindowsFocusListener = false;
-let hasWindowRemovedListener = false;
-let fastSimulatedDocking = false;
-let fastSimulatedDocking_TimeoutId = null;
-async function checkSimulateDocking({ reset = false, checkCachedWindowIds = true, checkListeners = true } = {}) {
-
-  // Should we simulate docking:
-  const shouldSimulate =
-    // Setting enabled:
-    settings.newWindow_besideCurrentWindow &&
-    (settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval || settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval === 0) &&
-    settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval >= 0 &&
-    // Any sidebar windows to check:
-    openSidebarWindows.length > 0;
-
-
-  if (
-    // Not clearing interval:
-    !reset &&
-    // Should simulate:
-    shouldSimulate
-  ) {
-    // Ensure we are simulating docking:
-    const wantedInterval = (+settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval);
-    if (simulateDockingInterval !== wantedInterval) {
-      // Window check interval changed (clear current interval):
-      checkSimulateDocking({ reset: true, checkCachedWindowIds: false, checkListeners: false });
-    }
-    if (simulateDockingIntervalId === null) {
-      // Start new interval check:
-      fastSimulatedDocking = true;
-      simulateDockingIntervalId = setInterval(simulateDockingBackground, wantedInterval);
-      simulateDockingInterval = wantedInterval;
-    }
-  } else {
-    if (simulateDockingIntervalId !== null) {
-      // Stop simulating docking:
-      if (fastSimulatedDocking_TimeoutId !== null) {
-        clearInterval(fastSimulatedDocking_TimeoutId);
-        fastSimulatedDocking_TimeoutId = null;
-      }
-
-
-      clearInterval(simulateDockingIntervalId);
-      simulateDockingIntervalId = null;
-      simulateDockingInterval = 0;
-    }
-  }
-
-  if (checkListeners) {
-    // Listen to window focus event:
-    if (
-      shouldSimulate &&
-      (
-        settings.newWindow_besideCurrentWindow_simulateDocking_autoFocus ||
-        settings.newWindow_besideCurrentWindow_simulateDocking_refocusParent
-      )
-    ) {
-      if (!hasWindowsFocusListener) {
-        browser.windows.onFocusChanged.addListener(onWindowFocusChanged);
-        hasWindowsFocusListener = true;
-      }
-    } else {
-      if (hasWindowsFocusListener) {
-        browser.windows.onFocusChanged.removeListener(onWindowFocusChanged);
-        hasWindowsFocusListener = false;
-      }
-    }
-
-    // Listen to window close event:
-    if (
-      shouldSimulate &&
-      (
-        settings.newWindow_besideCurrentWindow_simulateDocking_autoClose
-      )
-    ) {
-      if (!hasWindowRemovedListener) {
-        browser.windows.onRemoved.addListener(onWindowRemoved);
-        hasWindowRemovedListener = true;
-      }
-    } else {
-      if (hasWindowRemovedListener) {
-        browser.windows.onRemoved.removeListener(onWindowRemoved);
-        hasWindowRemovedListener = false;
-      }
-    }
-  }
-
-  // Check of any cached windows are closed (to avoid leaking to much memory):
-  if (checkCachedWindowIds && openSidebarWindows.length > 0) {
-    const openWindows = await browser.windows.getAll();
-    const openWindowIds = openWindows.map(window => window.id);
-    openSidebarWindows = openSidebarWindows.filter(info => openWindowIds.includes(info.windowId) && openWindowIds.includes(info.parentWindowId));
-    if (openSidebarWindows.length === 0) {
-      checkSimulateDocking({ checkCachedWindowIds: false });
-    }
-  }
-}
-async function onWindowRemoved(windowId) {
-  if (openSidebarWindows.some(info => info.parentWindowId === windowId || info.windowId === windowId)) {
-    // At least one docked sidebar window is affected:
-    fastSimulatedDocking = true;
-    simulateDockingBackground();  // Enable fast mode quickly.
-
-    // If it was a sidebar window that was closed then the change will be cached on first tick and change applied on the second tick:
-    await delay(100);
-    simulateDocking();
-  }
-}
-let changingFocus = false;
-async function onWindowFocusChanged(windowId) {
-  if (
-    windowId === browser.windows.WINDOW_ID_NONE ||
-    changingFocus
-  ) {
-    return;
-  }
-
-  changingFocus = true;
-  try {
-    let dockedSidebar = settings.newWindow_besideCurrentWindow_simulateDocking_autoFocus ? openSidebarWindows.filter(info => info.parentWindowId === windowId) : [];
-    if (dockedSidebar.length === 0) {
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_refocusParent) {
-        // See if focused window was a docked sidebar and in that case focus its parent window:
-        let sidebarWindow = openSidebarWindows.find(info => info.windowId === windowId);
-        if (sidebarWindow) {
-          const parentWindow = await browser.windows.get(sidebarWindow.parentWindowId).catch(error => null);
-          if (parentWindow) {
-            if (parentWindow.state !== 'minimized') {
-              await browser.windows.update(sidebarWindow.parentWindowId, { focused: true });
-            } else if (settings.newWindow_besideCurrentWindow_simulateDocking_minimize) {
-              await browser.windows.update(sidebarWindow.windowId, { state: 'minimized' });
-            }
-          }
-        }
-      }
-      return;
-    }
-    dockedSidebar.push({ windowId });
-
-    await Promise.all(dockedSidebar.map(info => browser.windows.update(info.windowId, { focused: true }).catch(error => null)));
-  } catch (error) {
-    // Can happen if the window that should be focused was closed.
-    console.error('Failed to change window focus!\n Window Focused: ', windowId, '\nError: ', error);
-  } finally {
-    changingFocus = false;
-  }
-}
-function simulateDocking() {
-  if (openSidebarWindows.length === 0) {
-    checkSimulateDocking();
-    return;
-  }
-
-  const count = {};
-  return openSidebarWindows.map(async function (info, index, array) {
-    try {
-      if (info.forget) {
-        return;
-      }
-
-      let sidebarWindows = [];
-      let sidebarIndex = 0;
-      if (
-        settings.newWindow_besideCurrentWindow_simulateDocking_tileHeight ||
-        settings.newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState
-      ) {
-        sidebarIndex = count[info.parentWindowId] || 0;
-        count[info.parentWindowId] = sidebarIndex + 1;
-        sidebarWindows = array.filter(info2 => info2.parentWindowId === info.parentWindowId);
-      }
-
-      let [sidebarWindow, parentWindow] = await Promise.all(
-        [info.windowId, info.parentWindowId]
-          .map(id =>
-            browser.windows.get(id, { populate: false }).catch(error => null)
-          )
-      );
-      if (info.forget) {
-        return;
-      }
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_tileHeight && sidebarWindow) {
-        info.window = sidebarWindow;
-      }
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState && parentWindow) {
-        info.parentWindow = parentWindow;
-      }
-
-      // Auto close sidebar if parent window is closed:
-      if (sidebarWindow && !parentWindow && settings.newWindow_besideCurrentWindow_simulateDocking_autoClose) {
-        // Forget about this sidebar window:
-        info.forget = true;
-
-        sidebarWindow = await browser.windows.get(sidebarWindow.id, { populate: true }).catch(error => null);
-        if (sidebarWindow && sidebarWindow.tabs.length <= 1) {
-          // Should close the sidebar window:
-          parentWindow = info.parentWindow;
-          if (settings.newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState && sidebarIndex === 0 && parentWindow) {
-            // Get open windows:
-            let openWindows = settings.newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow ?
-              (await browser.windows.getAll().catch(error => (console.error('Failed to check if there was any open windows except for docked sidebar windows!\nError: ', error), []))) :
-              [];
-            // ...that are not sidebar windows:
-            openWindows = openWindows.filter(window => window.id !== info.parentWindowId && !openSidebarWindows.some(info2 => info2.windowId === window.id));
-
-            if (openWindows.length < 1) {
-              // Should first set it to last parent size:
-              await browser.windows.update(info.windowId, {
-                top: parentWindow.top,
-                left: parentWindow.left,
-                width: parentWindow.width,
-                height: parentWindow.height,
-              });
-              if (parentWindow.state !== sidebarWindow.state) {
-                await browser.windows.update(info.windowId, { state: parentWindow.state });
-              }
-
-              // Wait for other sidebar windows with same parent window to be closed first:
-              if (sidebarWindows.length > 1) {
-                while (openSidebarWindows.some(info2 => info2.parentWindowId === info.parentWindowId && info2.windowId !== info.windowId)) {
-                  await delay(0);
-                }
-              }
-            }
-          }
-          parentWindow = null;
-
-          await browser.windows.remove(sidebarWindow.id).catch(error => (console.error('Failed to auto close docked sidebar window\nError: ', error), null));
-        }
-      }
-
-      // Stop tracking this window:
-      if (!sidebarWindow || !parentWindow) {
-        checkSimulateDocking();
-        return;
-      }
-
-      // Check Fullscreen / Minimized:
-      if (parentWindow.state === 'minimized') {
-        if (settings.newWindow_besideCurrentWindow_simulateDocking_minimize && sidebarWindow.state !== 'minimized') {
-          fastSimulatedDocking = true;
-          await browser.windows.update(sidebarWindow.id, { state: 'minimized' });
-        }
-        return;
-      } else if (parentWindow.state !== 'normal') {
-        // Parent window maximized or in fullscreen.
-        return;
-      }
-
-      if (sidebarWindow.state === 'minimized') {
-        if (settings.newWindow_besideCurrentWindow_simulateDocking_minimize) {
-          fastSimulatedDocking = true;
-          await browser.windows.update(sidebarWindow.id, { state: 'normal' });
-          sidebarWindow = await browser.windows.get(sidebarWindow.id, { populate: false });
-        } else {
-          // Sidebar window is minimized:
-          return;
-        }
-      }
-
-      const offset = sidebarWindow.width + (+settings.newWindow_besideCurrentWindow_spaceBetween);
-      let x = parentWindow.left - offset;
-      if (x < 0) {
-        x = 0;
-      }
-
-      let height = sidebarWindow.height;
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_syncHeight) {
-        if (settings.newWindow_besideCurrentWindow_simulateDocking_tileHeight) {
-          height = Math.round(parentWindow.height / sidebarWindows.length);
-        } else {
-          height = parentWindow.height;
-        }
-      }
-
-      let y = parentWindow.top;
-      if (sidebarIndex !== 0) {
-        if (settings.newWindow_besideCurrentWindow_simulateDocking_syncHeight) {
-          y += height * sidebarIndex;
-        } else {
-          for (let iii = 0; iii < sidebarIndex && iii < sidebarWindows.length; iii++) {
-            y += sidebarWindows[iii].window.height;
-          }
-        }
-      }
-
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_tileHeight && (sidebarIndex + 1) < sidebarWindows.length) {
-        height -= settings.newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin;
-      }
-
-      const wantedPos = { top: y, left: x };
-      if (sidebarWindow.height !== height) {
-        wantedPos.height = height;
-      }
-      if (settings.newWindow_besideCurrentWindow_simulateDocking_syncWidth && sidebarWindow.width !== settings.newWindow_width) {
-        if (info.synced_Width === settings.newWindow_width) {
-          browser.storage.local.set({ newWindow_width: sidebarWindow.width });
-          settings.newWindow_width = sidebarWindow.width;
-          info.synced_Width = sidebarWindow.width;
-        } else {
-          wantedPos.width = settings.newWindow_width;
-          info.synced_Width = settings.newWindow_width;
-        }
-      }
-      if (
-        sidebarWindow.top !== wantedPos.top ||
-        sidebarWindow.left !== wantedPos.left ||
-        (wantedPos.height && sidebarWindow.height !== wantedPos.height) ||
-        (wantedPos.width && sidebarWindow.width !== wantedPos.width)
-      ) {
-        fastSimulatedDocking = true;
-        await browser.windows.update(sidebarWindow.id, wantedPos);
-      }
-    } catch (error) {
-      console.error('Failed to simulate docking!\nWindow Info:', info, '\nError:', error);
-    }
+  // TST is active but couldn't determine its internal id.  
+  const id = await showBasicNotification({
+    title: browser.i18n.getMessage('permissions_required_notification_title'),
+    message: browser.i18n.getMessage('permissions_required_notification_message'),
+    iconUrl: 'icons/popup-32-light.png',
   });
-}
-async function simulateDockingBackground() {
-  let wasFast = fastSimulatedDocking;
-  fastSimulatedDocking = false;
 
-  if (
-    wasFast &&
-    // Setting enabled:
-    (settings.newWindow_besideCurrentWindow_simulateDocking_fastInterval || settings.newWindow_besideCurrentWindow_simulateDocking_fastInterval === 0) &&
-    settings.newWindow_besideCurrentWindow_simulateDocking_fastInterval >= 0 &&
-    // Setting is faster than slow mode:
-    settings.newWindow_besideCurrentWindow_simulateDocking_fastInterval < simulateDockingInterval &&
-    // Slow mode isn't disabled:
-    simulateDockingIntervalId !== null
-  ) {
-    if (fastSimulatedDocking_TimeoutId === null) {
-      fastSimulatedDocking_TimeoutId = setInterval(simulateDocking, (+settings.newWindow_besideCurrentWindow_simulateDocking_fastInterval));
-    } else {
-      return; // Let fast mode handle the docking simulation logic.
-    }
-  } else {
-    if (fastSimulatedDocking_TimeoutId !== null) {
-      clearInterval(fastSimulatedDocking_TimeoutId);
-      fastSimulatedDocking_TimeoutId = null;
-    }
-  }
-  await Promise.all(simulateDocking());
-  if (fastSimulatedDocking && !wasFast && fastSimulatedDocking_TimeoutId === null) {
-    // Enable fast mode quickly:
-    simulateDockingBackground();
-  }
-}
+  // Delay before showing Tree Style Tab's permission request: otherwise the Tree Style Tab notification might prevent our notification from being shown.
+  await delay(500);
 
-// #endregion Simulate docked window
+  // Change setting so that the permission is requested:
+  await SettingsTracker.set('requestTreeStyleTabPermission_tabs', true);
+  return id;
+}
 
 
 async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow = false, openAfterCurrent = false, childOfCurrent = false, windowSettings = {}, delayBeforeWindowSeperationInMilliseconds = null } = {}) {
@@ -653,6 +339,10 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
   // #region Determine Tree Style Tab's internal id
 
   let internalId = await getInternalTSTId();
+  if (!internalId) {
+    await handleFailedToDetermineTreeStyleTabInternalId();
+    return null;
+  }
 
   // #endregion Determine Tree Style Tab's internal id
 
@@ -672,7 +362,7 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
         return;
       }
       if (changeInfo.status === 'complete') {
-        promiseInfo.resolve(changeInfo.url);
+        promiseInfo.resolve(true);
       }
     };
     try {
@@ -696,7 +386,7 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
 
       // Wait for sidebar tab to load:
       sidebarTab = tab;
-      internalId = await Promise.race([delay(3000), promiseInfo.promise]);
+      await Promise.race([delay(3000), promiseInfo.promise]);
     } finally {
       browser.tabs.onUpdated.removeListener(loadListener);
     }
@@ -776,13 +466,7 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
           .then(window => (trackedSidebarInfo.parentWindow = window, true))
           .catch(error => (console.error('Failed to cache parentWindow for opened sidebar window\nError: ', error), false));
 
-        openSidebarWindows.push(trackedSidebarInfo);
-        fastSimulatedDocking = true;
-        checkSimulateDocking();
-        // Enable fast mode quickly:
-        if (simulateDockingIntervalId !== null) {
-          simulateDockingBackground();
-        }
+        addTrackedWindow(trackedSidebarInfo);
 
         if (besideCurrentWindow_simulateDocking_refocusParent) {
           browser.windows.update(activeTab.windowId, { focused: true }).catch(error => console.error('Failed to re-focus parent window after creating docked sidebar window!\nError:', error));
@@ -862,19 +546,20 @@ function getDefaultMoveDetails(overrides = {}, { dockedWindow = false } = {}) {
 }
 
 
-settingsLoaded.finally(async () => {
+settingsTracker.start.finally(async () => {
 
   // #region Settings
 
-  handleSettingChanges = (changes, areaName) => {
-    if (changes.fixSidebarStyle) {
+  settingsTracker.onChange.addListener((changes) => {
+    if (changes.fixSidebarStyle || changes.requestTreeStyleTabPermission_tabs) {
       registerToTST();
     }
+
     if (
       changes.delayBeforeWindowSeperationInMilliseconds ||
       changes.newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation
     ) {
-      clearTrackedDelays();
+      cancelAllTrackedDelays();
     }
     if (Object.keys(changes).some(change => change.startsWith('contextMenu'))) {
       updateContextMenu();
@@ -889,7 +574,7 @@ settingsLoaded.finally(async () => {
     )) {
       checkSimulateDocking();
     }
-  };
+  });
 
   // #endregion Settings
 
@@ -997,6 +682,9 @@ settingsLoaded.finally(async () => {
     switch (message.type) {
       case 'get-tst-style': {
         return getTSTStyle();
+      } break;
+      case 'handle-failed-get-internal-id': {
+        return handleFailedToDetermineTreeStyleTabInternalId();
       } break;
     }
   });
@@ -1161,7 +849,20 @@ settingsLoaded.finally(async () => {
             if (!sidebarURL) {
               sidebarURL = getSidebarURL(await getInternalTSTId());
             }
-            if (tstTabs.some(tab => tab.url !== sidebarURL)) {
+            if ((await Promise.all(tstTabs.map(async (tab) => {
+              if (!('url' in tab)) {
+                try {
+                  // Doesn't have the "tabs" permission in Tree Style Tab's option page.
+                  const firefoxTab = await browser.tabs.get(tab.id);
+                  // Updated tab info:
+                  Object.assign(tab, firefoxTab);
+                } catch (error) {
+                  console.error('Failed to get tab from Firefox.\nTabId: ', tab.id, '\nError:\n', error);
+                }
+              }
+              return tab.url !== sidebarURL;
+            }))).some(result => result)) {
+              // This window had a tab that didn't have the sidebar URL.
               return false;
             }
           } else {
@@ -1232,27 +933,21 @@ settingsLoaded.finally(async () => {
               await closePromise;
             } else {
               // Need to track this window's id:
-              if (openSidebarWindows.some(info => info.windowId === window.id)) {
+              if (isDockedWindow(window.id)) {
                 // Already tracked:
                 return;
               }
 
               const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: possibleParent.id, parentWindow: possibleParent };
 
-              openSidebarWindows.push(trackedSidebarInfo);
-              fastSimulatedDocking = true;
-              checkSimulateDocking();
-              // Enable fast mode quickly:
-              if (simulateDockingIntervalId !== null) {
-                simulateDockingBackground();
-              }
+              addTrackedWindow(trackedSidebarInfo);
             }
           }));
         }
 
         if (settings.newWindow_besideCurrentWindow_autoOpenAtStartup && browserStartup) {
           for (const window of possibleParentWindows) {
-            if (openSidebarWindows.some(sidebar => sidebar.parentWindowId === window.id)) {
+            if (isParentWindow(window.id)) {
               // This window already has an open sidebar window:
               continue;
             }
