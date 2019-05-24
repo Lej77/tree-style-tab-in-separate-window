@@ -37,6 +37,7 @@ import { SettingsTracker } from '../common/settings.js';
 
 import {
   showBasicNotification,
+  Notification,
 } from '../common/notifications.js';
 
 
@@ -286,21 +287,35 @@ async function registerToTST() {
  * @returns {Promise<string>} The id of the notification or `null` if no notification was shown.
  */
 async function handleFailedToDetermineTreeStyleTabInternalId() {
-  if (!await pingTST()) return null;
+  try {
+    if (!await pingTST()) return null;
+    // TST is active but couldn't determine its internal id => Operation requires the "tabs" permission from Tree Style Tab.
 
-  // TST is active but couldn't determine its internal id.  
-  const id = await showBasicNotification({
-    title: browser.i18n.getMessage('permissions_required_notification_title'),
-    message: browser.i18n.getMessage('permissions_required_notification_message'),
-    iconUrl: 'icons/popup-32-light.png',
-  });
+    const notificationOptions = {
+      title: browser.i18n.getMessage('permissions_required_notification_title'),
+      message: browser.i18n.getMessage('permissions_required_notification_message'),
+      iconUrl: 'icons/popup-32-light.png',
+    };
 
-  // Delay before showing Tree Style Tab's permission request: otherwise the Tree Style Tab notification might prevent our notification from being shown.
-  await delay(500);
+    const notification = new Notification(Object.assign({ trackShown: false }, notificationOptions));
+    try {
+      // Change setting so that the permission is requested:
+      await SettingsTracker.set('requestTreeStyleTabPermission_tabs', true);
 
-  // Change setting so that the permission is requested:
-  await SettingsTracker.set('requestTreeStyleTabPermission_tabs', true);
-  return id;
+      // Wait for Tree Style Tab to show its permission notification:
+      await Promise.race([delay(500), notification.waitUntilClosed()]);
+
+      if (notification.isClosed && !notification.wasClicked) {
+        // Tree Style Tab's notification prevented our first notification from being shown:
+        return showBasicNotification(notificationOptions);
+      }
+      return notification.getId();
+    } finally {
+      notification.dispose();
+    }
+  } catch (error) {
+    console.error('Failed to show notification with information about how to determine Tree Style Tab\'s internal id.\nError:\n', error);
+  }
 }
 
 
