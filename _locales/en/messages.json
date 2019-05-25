@@ -207,7 +207,7 @@
         "message": "Can't determine Tree Style Tab's internal id"
     },
     "permissions_required_notification_message": {
-        "message": "You can enter the id in the option's page or you can temporarily grant the \"tabs\" permission from:\nTree Style Tab's option page\nunder:\n\"Advanced\"\nin:\n\"Permissions for API Call from Other Addons\"",
+        "message": "The id can be entered in the option's page or it can be automatically determined if the \"tabs\" permission is granted from Tree Style Tab's option page in the \"Extra Features via Other Addons\" section.",
         "description": "This text is shown in a notification. The notification has a character limit after which the text is not shown."
     }
 }
