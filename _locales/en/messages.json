@@ -5,6 +5,9 @@
     "options_section_ContextMenu": {
         "message": "Context menu items"
     },
+    "options_section_TemporaryTab": {
+        "message": "Temporary tab"
+    },
     "options_section_TreeStyleTabStyle": {
         "message": "Custom Tree Style Tab Style"
     },
@@ -19,6 +22,9 @@
     },
     "options_legend_TabPosition": {
         "message": "Tab position"
+    },
+    "options_legend_LegacyTST": {
+        "message": "Legacy Settings (Required for Tree Style Tab v3.5.6 and earlier)"
     },
     "options_legend_window_WindowType": {
         "message": "Window type"
@@ -41,11 +47,14 @@
     "options_legend_window_WindowFocus": {
         "message": "Window focus"
     },
+    "options_legend_window_WithAndHeight": {
+        "message": "Control width and height"
+    },
     "options_legend_window_MultipleSidebarWindows": {
         "message": "Multiple sidebar windows"
     },
     "options_fixSidebarStyle": {
-        "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab."
+        "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab. These issues should already be fixed in Tree Style Tab v3.5.6 and later."
     },
     "options_TreeStyleTabStyle_Info": {
         "message": "This is the style changes made to Tree Style Tab's sidebar by this extension:"
@@ -76,6 +85,9 @@
     },
     "options_Commands_PromptButton_Description": {
         "message": "Write text representing a keyboard shortcut. For example \"Alt+X\""
+    },
+    "options_useTemporaryTabWhenOpeningNewWindow": {
+        "message": "Create a temporary tab in the current window when the sidebar page should be opened in a new window. This was required with Tree Style Tab v3.5.5 and earlier since the opened page would start tracking the window it was opened in. With later versions of Tree Style Tab the tracked window can be specified in the page's URL and so we can instead open the sidebar page directly in a new window."
     },
     "options_pinTabsBeforeMove": {
         "message": "Pin temporary tabs so that they don't affect scroll position."
@@ -112,6 +124,9 @@
     },
     "options_newWindow_besideCurrentWindow_autoDetectAtStartup": {
         "message": "Attempt to auto detect docked sidebar windows at extension startup."
+    },
+    "options_newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData": {
+        "message": "Use the \"browser.sessions.setWindowValue\" API to store some data that is associated with each window and will remain after browser restarts. This will greatly improve the  detection reliability of sidebar windows at startup. Note that this requires the \"sessions\" permission to work, without it this setting will have no effect."
     },
     "options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation": {
         "message": "Performance might be worse at startup and therefore it might take longer for sidebar pages to load. Time to wait before moving a sidebar page's tab to a new window at startup: "
@@ -152,8 +167,11 @@
     "options_newWindow_besideCurrentWindow_simulateDocking_syncWidth": {
         "message": "All sidebar windows should have the same width. (This will sync the width of all docked sidebar windows to the \"Width of the created window\" setting. So each time a docked sidebar window is resized the setting will be changed and if the setting is changed then the docked sidebar windows will be resized.)"
     },
+    "options_newWindow_besideCurrentWindow_simulateDocking_tileWidth": {
+        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed beside each other."
+    },
     "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight": {
-        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed under each other."
+        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed under each other. (Overrides the \"placed beside each other\" option.)"
     },
     "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin": {
         "message": "Height margin between windows: "
@@ -177,10 +195,16 @@
         "message": "An extension's internal id is randomized every time the extension is installed, but remains the same when the extension is updated. The \"about:debugging#addons\" page can be used to find an extension's internal id. The internal id is for example used as part of the URL for an extension's web pages."
     },
     "options_requestTreeStyleTabPermission_tabs": {
-        "message": "Request \"tabs\" permission from Tree Style Tab. If this permission is granted then Tree Style Tab's internal id can be automatically determined. This is accomplished by using Tree Style Tab's API to open a group tab, then getting that tab's URL from Tree Style Tab and finally parsing the group tab's URL to find the internal id."
+        "message": "Request \"tabs\" permission from Tree Style Tab. If this permission is granted then Tree Style Tab's internal id can be automatically determined. This is accomplished by using Tree Style Tab's API to open a group tab, then getting that tab's URL from Tree Style Tab and finally parsing the group tab's URL to find the internal id. If you prefer you can alternatively just grant the \"tabs\" permission directly from Firefox via the optional permissions section on this option page."
+    },
+    "options_useModernSidebarUrl": {
+        "message": "Use the \"ext+treestyletab:tabbar\" URL when opening sidebar pages. Tree Style Tab will automatically detect this URL and redirect it to its internal sidebar page. Note that Tree Style Tab v3.5.5 and earlier didn't support this URL and therefore required that this extension knew Tree Style Tab's internal id so that it could open Tree Style Tab's internal sidebar page directly."
     },
     "options_treeStyleTabInternalId": {
         "message": "Cached internal id for Tree Style Tab (used to open Tree Style Tab's sidebar page in a tab):"
+    },
+    "options_optionsPage_disableDarkTheme": {
+        "message": "Disable dark theme support on options page."
     },
     "options_resetSettings": {
         "message": "Reset Settings"
@@ -209,5 +233,50 @@
     "permissions_required_notification_message": {
         "message": "The id can be entered in the option's page or it can be automatically determined if the \"tabs\" permission is granted from Tree Style Tab's option page in the \"Extra Features via Other Addons\" section.",
         "description": "This text is shown in a notification. The notification has a character limit after which the text is not shown."
+    },
+    "options_OptionalPermissions_Header": {
+        "message": "Optional Permissions"
+    },
+    "options_OptionalPermissions_Tabs_Title": {
+        "message": "\"tabs\""
+    },
+    "options_OptionalPermissions_Tabs_Explanation": {
+        "message": "The \"tabs\" permission is needed to access a tab's title or URL.\n\nThis is needed to determine Tree Style Tab's internal id since that is done by opening a Tree Style Tab specific page in a tab and parsing that tab's URL."
+    },
+    "options_OptionalPermissions_Sessions_Title": {
+        "message": "\"sessions\""
+    },
+    "options_OptionalPermissions_Sessions_Explanation": {
+        "message": "The \"sessions\" permission is needed to save window specific data that can remain after the browser is restarted. This can be used to improve the detection of docked windows at startup after the browser has been restarted and an old session has been restored.\n\nThe \"sessions\" permission is only available as an optional permission in Firefox 77 and later."
+    },
+    "options_OptionalPermissions_Sessions_LegacyWarning": {
+        "message": "The \"sessions\" permission is only available as an optional permission in Firefox 77 and later.\n\nClick anywhere to dismiss this message."
+    },
+    "options_OptionalPermissions_Sessions_PermissionAvailable": {
+        "message": "Permission available in this Firefox version:"
+    },
+    "options_OptionalPermissions_Sessions_PermissionAvailable_True": {
+        "message": "True"
+    },
+    "options_OptionalPermissions_Sessions_PermissionAvailable_False": {
+        "message": "False"
+    },
+    "optionalPermissions_BrowserActionPrompt": {
+        "message": "You need to press on the extension's button in the browser's toolbar to request the permission. Press anywhere else in the settings page to cancel the request."
+    },
+    "optionalPermissions_Request": {
+        "message": "Request"
+    },
+    "optionalPermissions_Remove": {
+        "message": "Remove"
+    },
+    "optionalPermissions_Available": {
+        "message": "Granted:"
+    },
+    "optionalPermissions_Granted": {
+        "message": "True"
+    },
+    "optionalPermissions_NotGranted": {
+        "message": "False"
     }
 }

@@ -13,6 +13,14 @@ import {
 } from '../common/disposables.js';
 
 
+/**
+ * @typedef {import('../common/events.js').EventSubscriber<T, R>} EventSubscriber
+ * @template T
+ * @template R
+ */
+null;
+
+
 export async function delay(timeInMilliseconds) {
     return new Promise((resolve, reject) => {
         try {
@@ -25,7 +33,7 @@ export async function delay(timeInMilliseconds) {
 
 /**
  * A delay that will be canceled if a disposable collection is disposed.
- * 
+ *
  * @param {number} timeInMilliseconds Time in milliseconds to wait.
  * @param {DisposableCollection} [disposables=null] Disposables collection to bind delay to.
  * @returns {Promise<boolean>} True if successful. False if canceled.
@@ -53,8 +61,9 @@ export async function boundDelay(timeInMilliseconds, disposables = null) {
  * Get the first "true" value returned from an array of promises.
  *
  * @export
- * @param {Array} array Promises to await for values.
- * @returns {*|false} Value of the promise that first resolved to a true value. Otherwise false.
+ * @template T
+ * @param {Promise<T>[]} array Promises to await for values.
+ * @returns {T|false} Value of the promise that first resolved to a true value. Otherwise false.
  */
 export function checkAny(array) {
     array = array.filter(value => value);
@@ -62,10 +71,10 @@ export function checkAny(array) {
         return false;
     }
 
-    let promiseWrapper = new PromiseWrapper();
+    const promiseWrapper = new PromiseWrapper();
 
     let promises = 0;
-    let waitForValue = async (value) => {
+    const waitForValue = async (value) => {
         try {
             value = await value;
             if (value) {
@@ -81,7 +90,7 @@ export function checkAny(array) {
     };
 
     promises++;
-    for (let value of array) {
+    for (const value of array) {
         promises++;
         waitForValue(value);
     }
@@ -95,7 +104,7 @@ export function checkAny(array) {
 
 /**
  * Allows synchronous access to a Promise's resolve and reject functions.
- * 
+ *
  * @class PromiseWrapper
  */
 export class PromiseWrapper {
@@ -167,7 +176,7 @@ export class PromiseWrapper {
 
     /**
      * Returns a promise if it is available or if it is the only way to provide the results.
-     * 
+     *
      * @returns {any} Either a promise that will be resolved to the correct value or the value that the promise would have been resolved to.
      * @memberof PromiseWrapper
      */
@@ -189,7 +198,7 @@ export class PromiseWrapper {
 
     /**
      * Indicates if the promise has a value, that is to say has been resolved or rejected.
-     * 
+     *
      * @readonly
      * @memberof PromiseWrapper
      */
@@ -199,7 +208,7 @@ export class PromiseWrapper {
 
     /**
      * Indicates if the promise was rejected.
-     * 
+     *
      * @readonly
      * @memberof PromiseWrapper
      */
@@ -209,7 +218,7 @@ export class PromiseWrapper {
 
     /**
      * The value that the promise was resolved or rejected with.
-     * 
+     *
      * @readonly
      * @memberof PromiseWrapper
      */
@@ -222,7 +231,7 @@ export class PromiseWrapper {
 
 /**
  * Tracks disposables and disposes of them when a promise is resolved.
- * 
+ *
  * @class OperationManager
  */
 export class OperationManager {
@@ -256,21 +265,20 @@ export class OperationManager {
 
 /**
  * Wrap a setTimeout call and keep track of the timeoutId.
- * 
+ *
  * @class Timeout
  */
 export class Timeout {
 
     constructor(callback, timeInMilliseconds) {
-        Object.assign(this, {
-            _isDisposed: false,
-            _onDisposed: null,
+        this._isDisposed = false;
+        this._onDisposed = null;
 
-            _timeoutId: null,
-            _callback: callback,
+        this._timeoutId = null;
+        this._callback = callback;
 
-            _timeInMilliseconds: timeInMilliseconds,
-        });
+        this._timeInMilliseconds = timeInMilliseconds;
+
         this._start();
     }
 
@@ -345,36 +353,45 @@ export class Timeout {
 
 /**
  * Ensure a callback isn't called too often.
- * 
+ *
+ * @template {any[]} A
  * @class RequestManager
  */
 export class RequestManager {
 
+    // eslint-disable-next-line valid-jsdoc
+    /**
+     * Creates an instance of RequestManager.
+     *
+     * @param { (...args: A) => (void | boolean | Promise<void> | Promise<boolean>) } [callback=null] A callback to subscribe to the update event.
+     * @param {number | function(): number} [blockTimeInMilliseconds=1000] Time to block between requests in milliseconds. Specify a negative time to ignore any block behaviour, note that `simultaneousUpdates` will still be respected.
+     * @param {boolean} [simultaneousUpdates=false] Allow multiple updates at the same time.
+     * @memberof RequestManager
+     */
     constructor(callback = null, blockTimeInMilliseconds = 1000, simultaneousUpdates = false) {
-        Object.assign(this, {
-            _isDisposed: false,
-            _onDisposed: new EventManager(),
+        this._isDisposed = false;
+        this._onDisposed = new EventManager();
 
-            _onUpdate: new EventManager(),
+        this._onUpdate = new EventManager();
 
-            _blockTimeout: null,
-            _invalidated: false,
-            _lastArgs: [],
-            _confirmPromiseWrapper: new PromiseWrapper(),
+        this._blockTimeout = null;
+        this._invalidated = false;
+        /** @type {A | []} The arguments to use for the next update. */
+        this._lastArgs = [];
+        this._confirmPromiseWrapper = new PromiseWrapper();
 
-            _simultaneousUpdates: simultaneousUpdates,
-            _updates: 0,
+        this._simultaneousUpdates = simultaneousUpdates;
+        this._updates = 0;
 
-            blockTimeInMilliseconds: blockTimeInMilliseconds,
-        });
+        this.blockTimeInMilliseconds = blockTimeInMilliseconds;
 
         this._onUpdate.addListener(callback);
     }
 
     /**
      * Block all updates.
-     * 
-     * @param {any} [overrideTime=null] The time to block the updates in milliseconds. If false the default time will be used.
+     *
+     * @param {null | number} [overrideTime=null] The time to block the updates in milliseconds. If false the default time will be used.
      * @returns {Timeout} A Timeout object that will be closed when the block has expired.
      * @memberof RequestManager
      */
@@ -393,13 +410,18 @@ export class RequestManager {
         } else {
             time = this.blockTimeInMilliseconds;
         }
-        this._blockTimeout = new Timeout(() => this.unblock(), time);
-        return this._blockTimeout;
+        if (time >= 0) {
+            this._blockTimeout = new Timeout(() => this.unblock(), time);
+            return this._blockTimeout;
+        } else {
+            this._blockTimeout = null;
+            return new Timeout(() => undefined, 0);
+        }
     }
 
     /**
      * Unblock and update if invalidated.
-     * 
+     *
      * @memberof RequestManager
      */
     unblock() {
@@ -413,11 +435,12 @@ export class RequestManager {
 
     /**
      * Unblock and update. Forces an update now and block after it.
-     * 
+     *
+     * @param {A} args Arguments to use when starting the next update.
      * @memberof RequestManager
      */
-    async forceUpdate() {
-        this._lastArgs = Array.from(arguments);
+    async forceUpdate(...args) {
+        this._lastArgs = args;
         await this._update(true);
     }
 
@@ -434,13 +457,13 @@ export class RequestManager {
             return;
         }
 
-        let b = this.block();
+        const currentUpdateBlock = this.block();
         this._invalidated = false;
 
-        let args = this._lastArgs;
+        const args = this._lastArgs;
         this._lastArgs = [];
 
-        let affectedConfirmPromise = this._confirmPromiseWrapper;
+        const affectedConfirmPromise = this._confirmPromiseWrapper;
         this._confirmPromiseWrapper = new PromiseWrapper();
         this._confirmPromiseWrapper.promise.then((value) => affectedConfirmPromise.resolve(value));
 
@@ -449,7 +472,7 @@ export class RequestManager {
             this._updates++;
             releaseBlock = await checkAny(this._onUpdate.fire.apply(this._onUpdate, args));
 
-            if (releaseBlock && b === this._blockTimeout) {
+            if (releaseBlock && currentUpdateBlock === this._blockTimeout) {
                 this.unblock();
             }
         } finally {
@@ -465,17 +488,18 @@ export class RequestManager {
 
     /**
      * Update after block is released.
-     * 
-     * @returns {boolean} True if update was successful.
+     *
+     * @param {A} args Arguments to use when starting the next update.
+     * @returns {Promise<boolean>} True if update was successful.
      * @memberof RequestManager
      */
-    async invalidate() {
+    async invalidate(...args) {
         if (this.isDisposed) {
             return false;
         }
         this._invalidated = true;
-        this._lastArgs = Array.from(arguments);
-        let updatePromise = this._confirmPromiseWrapper.getValue();
+        this._lastArgs = args;
+        const updatePromise = this._confirmPromiseWrapper.getValue();
         if (!this.isBlocked) {
             this._update();
         }
@@ -491,14 +515,35 @@ export class RequestManager {
         return this._updates > 0;
     }
 
+    /**
+     * The arguments that will be used for the next update.
+     *
+     * @returns {A | []} The arguments that will be used for the next call or an empty array if the next call haven't been queued yet.
+     * @readonly
+     * @memberof RequestManager
+     */
     get lastArgs() {
         return this._lastArgs;
     }
 
+    /**
+     * Check if the current request is invalidated.
+     *
+     * @returns {boolean} True if the current state is invalidated.
+     * @readonly
+     * @memberof RequestManager
+     */
     get isInvalidated() {
         return this._invalidated;
     }
 
+    /**
+     * An event that will be invoked when the next update should be performed.
+     *
+     * @returns {EventSubscriber<A, (void | boolean | Promise<void> | Promise<boolean>)>} The event.
+     * @readonly
+     * @memberof RequestManager
+     */
     get onUpdate() {
         return this._onUpdate.subscriber;
     }
@@ -508,7 +553,7 @@ export class RequestManager {
 
     /**
      * Unblock and prevent further updates.
-     * 
+     *
      * @memberof RequestManager
      */
     dispose() {
@@ -537,7 +582,7 @@ export class RequestManager {
 
 /**
  * Delay events and handle them later.
- * 
+ *
  * @class EventQueue
  */
 export class EventQueue {
@@ -552,7 +597,7 @@ export class EventQueue {
 
     /**
      * Handle an event. The callback might be delayed.
-     * 
+     *
      * @param {Function} callback Function to call when the event should be handled. First arg is a Boolean that is true if the callback was delayed.
      * @param {boolean} [safeToDelay=false] Indicates if it is safe to delay the event handler.
      * @memberof EventQueue

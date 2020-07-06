@@ -26,6 +26,8 @@ import {
 import {
     settings,
     settingsTracker,
+    messageTypes,
+    quickLoadSetting,
 } from '../common/common.js';
 
 import {
@@ -34,22 +36,72 @@ import {
 
 import {
     delay,
+    PromiseWrapper,
 } from '../common/delays.js';
 
 import {
-    pingTST,
-} from '../tree-style-tab/utilities.js';
+    createOptionalPermissionArea,
+} from '../ui/permissions.js';
+
+import {
+    createStatusIndicator,
+} from '../ui/status-indicator.js';
+
+import {
+    EventManager,
+} from '../common/events.js';
+
+import {
+    PortConnection,
+} from '../common/connections.js';
 
 
 setMessagePrefix('message-');
 setRequiresPrefix('requires-');
 
 
+quickLoadSetting('optionsPage_disableDarkTheme')
+    .then(disableDarkTheme => {
+        if (disableDarkTheme) {
+            document.documentElement.classList.remove('support-dark-theme');
+        }
+    })
+    .catch(error => console.error('Failed to disable dark theme support on options page.', error));
+
+
 async function initiatePage() {
-    setTextMessages();
+    const pagePort = new PortConnection();
 
+    const onPermissionChange = new EventManager();
+    const permissionControllers = [];
 
-    bindCollapsableAreas();
+    const collapsableInfo = bindCollapsableAreas(
+        {
+            enabledCheck: [
+                {
+                    element: document.getElementById('permissionsArea'),
+                    check: () => {
+                        const hasAnyPermission = permissionControllers.filter(controller => controller.hasPermission).length > 0;
+                        return hasAnyPermission;
+                    },
+                },
+                {
+                    element: document.getElementById('temporaryTabArea'),
+                    check: () => settings.useTemporaryTabWhenOpeningNewWindow,
+                },
+                {
+                    element: document.getElementById('simulateDockingArea'),
+                    check: () => settings.newWindow_besideCurrentWindow && settings.newWindow_besideCurrentWindow_simulateDocking_slowInterval >= 0,
+                },
+                {
+                    element: document.getElementById('tstInternalIdArea'),
+                    check: () => !settings.useModernSidebarUrl,
+                },
+            ],
+        }
+    );
+    onPermissionChange.addListener(() => collapsableInfo.checkAll());
+
     const checkRequired = bindDependantSettings();
 
     const shortcuts = createShortcutsArea({
@@ -75,11 +127,96 @@ async function initiatePage() {
     styleHeader.parentElement.classList.add('enablable');
     const styleElement = document.getElementById('currentTreeStyleTabStyle');
     const updateStyle = async () => {
-        let style = await browser.runtime.sendMessage({ type: 'get-tst-style' });
+        let style = await browser.runtime.sendMessage({ type: messageTypes.getTstStyle });
         styleElement.textContent = style;
         toggleClass(styleHeader.parentElement, 'enabled', style);
     };
 
+
+    // #region Optional Permissions
+
+    {
+        const optionalPermissionsArea = document.getElementById('permissionsArea');
+        const pagePermissionChanged = pagePort.getEvent('permissionChanged');
+
+        const permissionChangedCallback = (obj, internalChange) => {
+            if (internalChange) {
+                browser.runtime.sendMessage({ type: messageTypes.permissionsChanged, permission: obj.permission, value: obj.hasPermission });
+            }
+            onPermissionChange.fire(obj);
+        };
+
+        const tabsPermissionArea = createOptionalPermissionArea({
+            permission: { permissions: ['tabs'] },
+            titleMessage: 'options_OptionalPermissions_Tabs_Title',
+            explanationMessage: 'options_OptionalPermissions_Tabs_Explanation',
+
+            requestViaBrowserActionCallback: async (permission) => {
+                await pagePort.sendMessageBoundToPort({ type: messageTypes.requestPermission, permission: permission });
+            },
+            browserActionPromptMessage: 'optionalPermissions_BrowserActionPrompt',
+
+            permissionChangedCallback,
+            onPermissionChanged: pagePermissionChanged,
+        });
+        permissionControllers.push(tabsPermissionArea);
+        optionalPermissionsArea.appendChild(tabsPermissionArea.area);
+
+
+        let requestOp = new PromiseWrapper();
+        const sessionPermissionArea = createOptionalPermissionArea({
+            permission: { permissions: ['sessions'] },
+            titleMessage: 'options_OptionalPermissions_Sessions_Title',
+            explanationMessage: 'options_OptionalPermissions_Sessions_Explanation',
+
+            requestViaBrowserActionCallback: (permission) => {
+                if (permission) {
+                    return requestOp.getValue();
+                } else {
+                    requestOp.resolve(null);
+                    requestOp = new PromiseWrapper();
+                }
+            },
+            browserActionPromptMessage: 'options_OptionalPermissions_Sessions_LegacyWarning',
+
+            permissionChangedCallback,
+            onPermissionChanged: pagePermissionChanged,
+        });
+        permissionControllers.push(sessionPermissionArea);
+        optionalPermissionsArea.appendChild(sessionPermissionArea.area);
+        {
+            const permissionAvailableStatusIndicator = createStatusIndicator({
+                headerMessage: 'options_OptionalPermissions_Sessions_PermissionAvailable',
+                enabledMessage: 'options_OptionalPermissions_Sessions_PermissionAvailable_True',
+                disabledMessage: 'options_OptionalPermissions_Sessions_PermissionAvailable_False',
+            });
+            sessionPermissionArea.section.content.appendChild(document.createElement('br'));
+            sessionPermissionArea.section.content.appendChild(permissionAvailableStatusIndicator.area);
+            (async () => {
+                let isAvailable = false;
+                try {
+                    const browserInfo = await browser.runtime.getBrowserInfo();
+                    const [majorVersion,] = (await browserInfo).version.split('.');
+                    if (majorVersion >= 77) {
+                        isAvailable = true;
+                    }
+                } catch (error) {
+                    console.error('Failed to determine if "sessions" permission is available', error);
+                }
+                if (isAvailable) {
+                    permissionAvailableStatusIndicator.isEnabled = true;
+                } else {
+                    permissionAvailableStatusIndicator.isEnabled = false;
+                    sessionPermissionArea.hasError = true;
+                }
+            })();
+        }
+    }
+
+    // #endregion Optional Permissions
+
+
+    setTextMessages();
     await settingsTracker.start;
 
     const boundSettings = bindElementIdsToSettings(settings, {
@@ -95,21 +232,27 @@ async function initiatePage() {
         newValuePattern: true,
     });
 
-    let handleLoad = () => {
+    const handleLoad = () => {
         shortcuts.update(); // Keyboard Commands
         boundSettings.skipCurrentInputIgnore();
         checkRequired();
         updateStyle();
+        collapsableInfo.checkAll();
     };
     handleLoad();
 
     settingsTracker.onChange.addListener((changes) => {
+        collapsableInfo.checkAll();
+
         if (changes.fixSidebarStyle) {
             updateStyle();
         }
         // Might have been changed from context menu:
         if (changes.browserAction_OpenInNewWindow || changes.browserAction_OpenInNewWindow_Docked) {
             checkRequired();
+        }
+        if (changes.optionsPage_disableDarkTheme) {
+            toggleClass(document.documentElement, 'support-dark-theme', !settings.optionsPage_disableDarkTheme);
         }
     });
 
@@ -150,7 +293,7 @@ async function initiatePage() {
             });
             if (!fromOpenTabs) {
                 // Show a notification about how to determine Tree Style Tab's internal id.
-                await browser.runtime.sendMessage({ type: 'handle-failed-get-internal-id' });
+                await browser.runtime.sendMessage({ type: messageTypes.handleFailedToGetInternalId });
             }
         }
     });

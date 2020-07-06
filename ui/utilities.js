@@ -17,7 +17,7 @@ export function getMessageElements(rootElement = null) {
   return messageElements;
 }
 
-export function setTextMessages(elementsToText = null) {
+export function setTextMessages(elementsToText = null, { asHTML = false } = {}) {
   if (!Array.isArray(elementsToText))
     elementsToText = getMessageElements(elementsToText);
 
@@ -26,7 +26,12 @@ export function setTextMessages(elementsToText = null) {
     for (const c of ele.classList) {
       if (c.length > messagePrefix.length && c.startsWith(messagePrefix)) {
         const messageId = c.substring(messagePrefix.length);
-        ele.textContent = browser.i18n.getMessage(messageId);
+        const message = browser.i18n.getMessage(messageId);
+        if (asHTML) {
+          ele.innerHTML = message;
+        } else {
+          ele.textContent = message;
+        }
         break;
       }
     }

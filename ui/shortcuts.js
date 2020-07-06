@@ -13,7 +13,7 @@ import {
 
 
 export function createShortcutsArea({
-  sectionAnimation,
+  sectionAnimation = {},
 
   commandInfos,
   headerMessage,
@@ -21,9 +21,8 @@ export function createShortcutsArea({
 
   resetButtonMessage,
   promptButtonMessage,
-} = {}) {
+}) {
   sectionAnimation = AnimationInfo.asInfo(sectionAnimation);
-
   const callbacks = [];
 
   const section = createCollapsableArea(sectionAnimation);
@@ -41,6 +40,7 @@ export function createShortcutsArea({
 
   const information = document.createElement('div');
   information.classList.add(messagePrefix + infoMessage);
+  information.classList.add('textSelectable');
   section.content.appendChild(information);
 
 
@@ -186,10 +186,14 @@ export function createShortcutsArea({
 
     promptButton.addEventListener('click', async (e) => {
       const value = prompt(browser.i18n.getMessage('options_Commands_PromptButton_Description'), command.shortcut || '');
+      if (value == null) {
+        // Canceled
+        return;
+      }
 
       await browser.commands.update({
         name: command.name,
-        shortcut: value,
+        shortcut: value || '',
       });
 
       updateShortcut();
@@ -226,7 +230,7 @@ export function createShortcutsArea({
 
   // Create areas for all commands:
   browser.commands.getAll().then(async (commands) => {
-    for (let command of commands) {
+    for (const command of commands) {
       await createShortcutArea(command);
     }
 
@@ -243,7 +247,7 @@ export function createShortcutsArea({
     area: section.area,
     section,
     update: () => {
-      for (let callback of callbacks) {
+      for (const callback of callbacks) {
         callback();
       }
     },

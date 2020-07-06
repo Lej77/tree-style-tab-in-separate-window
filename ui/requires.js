@@ -5,6 +5,7 @@ import {
 
 
 export let requiresPrefix = 'requires_';
+export let requiredValueAttribute = 'data-required-value';
 export const disabledClass = 'disabled-due-to-dependent-value';
 export const requiresAnyClass = 'requiresAny';
 
@@ -12,8 +13,19 @@ export function setRequiresPrefix(value) {
     requiresPrefix = value;
 }
 
+export function setRequiredValueAttribute(value) {
+    requiredValueAttribute = value;
+}
+
+/**
+ * Bind to elements with the requires class and update their style when the setting they are dependent upon is enabled or disabled.
+ *
+ * @export
+ * @returns {function(): void} A function that will re-check each bound element and update their styling if needed. Use this if UI elements are changed without `input` events.
+ */
 export function bindDependantSettings() {
     const requireObjs = [];
+
     const checkRequired = (affectedObject = null) => {
         for (const obj of requireObjs) {
             if (affectedObject && obj !== affectedObject) {
@@ -37,8 +49,9 @@ export function bindDependantSettings() {
                     inverted = true;
                 }
 
-                const requiredElement = document.getElementById(requireId);
-                let obj = {
+                let requiredValue = ele.getAttribute(requiredValueAttribute);
+                const requiredElement = /** @type {HTMLInputElement} */ (document.getElementById(requireId));
+                const obj = {
                     listener: (e) => {
                         const changed = obj.checkEnabled();
                         if (changed) {
@@ -49,13 +62,27 @@ export function bindDependantSettings() {
                         let enabled = false;
                         if (requiredElement.type === 'checkbox') {
                             enabled = requiredElement.checked;
+                            if (requiredValue) {
+                                enabled = requiredValue == String(enabled);
+                            }
                         } else if (requiredElement.type === 'number') {
                             let value = parseInt(requiredElement.value);
-                            enabled = !isNaN(value) && value >= 0;
+                            if (requiredValue != null) {
+                                if (requiredValue == 'NaN') {
+                                    enabled = isNaN(value);
+                                } else {
+                                    enabled = !isNaN(value) && String(value) == requiredValue;
+                                }
+                            } else {
+                                enabled = !isNaN(value) && value >= 0;
+                            }
+                        } else if (requiredValue != null) {
+                            enabled = requiredElement.value == requiredValue;
                         }
                         if (inverted) {
                             enabled = !enabled;
                         }
+                        /** @type {HTMLElement} */
                         let eleToCheck = requiredElement;
                         while (eleToCheck) {
                             if (enabled) {
@@ -76,6 +103,7 @@ export function bindDependantSettings() {
                     },
                 };
                 requireObjs.push(obj);
+                // TODO: should probably listen to setting changes instead of UI changes.
                 requiredElement.addEventListener('input', obj.listener);
 
                 break;

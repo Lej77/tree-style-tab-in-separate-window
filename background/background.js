@@ -13,32 +13,68 @@ import {
   settingsTracker,
   trackedDelay,
   cancelAllTrackedDelays,
+  kWINDOW_DATA_KEY_DOCKING_INFO,
+  messageTypes,
 } from '../common/common.js';
 
 import {
   kTST_ID,
-  getTabsFromTST,
   pingTST,
   unregisterFromTST,
 } from '../tree-style-tab/utilities.js';
 
 import {
   getInternalTSTId,
-  getSidebarURL,
 } from '../tree-style-tab/internal-id.js';
+
+import {
+  getSidebarURL,
+} from '../tree-style-tab/sidebar-tab.js';
 
 import {
   addTrackedWindow,
   isDockedWindow,
   isParentWindow,
   checkSimulateDocking,
+  findSidebarWindows,
+  setIsStoringSessionData,
 } from '../background/simulate-docking.js';
-import { SettingsTracker } from '../common/settings.js';
+
+import {
+  SettingsTracker
+} from '../common/settings.js';
 
 import {
   showBasicNotification,
   Notification,
 } from '../common/notifications.js';
+
+import {
+  EventManager,
+} from '../common/events.js';
+
+import {
+  ToolbarPermissionRequest,
+} from '../common/permissions.js';
+
+import {
+  PortManager,
+} from '../common/connections.js';
+
+import {
+  DisposableCollection,
+} from '../common/disposables.js';
+
+
+/**
+ * @typedef { import('../common/utilities.js').BrowserTab } BrowserTab
+ */
+/**
+ * @typedef { import('../common/utilities.js').BrowserWindow } BrowserWindow
+ */
+/**
+ * @typedef { import('../tree-style-tab/utilities.js').TSTTab } TSTTab
+ */
 
 
 // #region Context Menu
@@ -85,7 +121,7 @@ async function updateContextMenu() {
         prefix = '';
       }
       let uniqueId = 0;
-      let ids = creationDetails.map(item => item.id);
+      const ids = creationDetails.map(item => item.id);
       while (ids.includes(prefix + uniqueId)) {
         uniqueId++;
       }
@@ -98,8 +134,8 @@ async function updateContextMenu() {
       for (let contextMenuItem of items) {
         let {
           id,
-          title,
-          contexts,
+          title = null,
+          contexts = null,
           checked = null,
           type = defaultValues.type || null,
           enabled = true,
@@ -319,23 +355,238 @@ async function handleFailedToDetermineTreeStyleTabInternalId() {
 }
 
 
-async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow = false, openAfterCurrent = false, childOfCurrent = false, windowSettings = {}, delayBeforeWindowSeperationInMilliseconds = null } = {}) {
-  if (!await pingTST()) {
-    return false;
+/**
+ * Create a new window that can optionally be docked with a parent window.
+ *
+ * @param {Object} Info Specifies how a new window is created.
+ * @param {boolean} [Info.popup] Indicates that the window should be of a popup type. This kind of window won't have most of the items that a normal window has such as a URL bar.
+ * @param {boolean} [Info.popup_hidden] If `popup` is `true` then this should ensure that the window can't be observed by other extensions.
+ * @param {number} [Info.width] The width of the window. `-1` or unspecified to use default width.
+ * @param {number} [Info.height] The height of the window. `-1` or unspecified to use default height.
+ * @param {boolean} [Info.besideCurrentWindow] Create the window next to the current window. This will also ensure that the window is tracked via the "simulate docking" feature.
+ * @param {number} [Info.besideCurrentWindow_spaceBetween] Space between the created window and the window that it is placed next to.
+ * @param {boolean} [Info.besideCurrentWindow_simulateDocking_refocusParent] Refocus the current window after the new window has been created.
+ * @param {number | null} [Info.tabId] The id of a tab that should be moved to the newly created window.
+ * @param {string | string[]} [Info.url] A URL or array of URLs to open as tabs in the window.
+ * @param {boolean} [Info.incognito] Determines if the newly created window is a private window.
+ * @param {number} [Info.parentWindowId] The id of the parent window. Used for docking windows. Required when `besideCurrentWindow` is `true`.
+ * @param {null | function(BrowserWindow): any} [Info.handleNewWindow] Gain quick access to the opened window.
+ * @returns {Promise<BrowserWindow>} The created window.
+ */
+async function createDockedWindow({
+  popup = false,
+  popup_hidden = false,
+  width = -1,
+  height = -1,
+  besideCurrentWindow = false,
+  besideCurrentWindow_spaceBetween = -1,
+  besideCurrentWindow_simulateDocking_refocusParent = false,
+  tabId = null,
+  url = null,
+  incognito = false,
+  parentWindowId = null,
+  handleNewWindow = null,
+}) {
+  // Configure new window:
+  const details = {
+    incognito,
+  };
+  if (tabId || tabId === 0) {
+    details.tabId = tabId;
   }
+  if (url) {
+    details.url = url;
+  }
+
+  if (popup) {
+    details.type = popup_hidden ? 'panel' : 'popup';
+  }
+  if (width && width > 0) {
+    details.width = +width;
+  }
+  if (height && height > 0) {
+    details.height = +height;
+  }
+  let currentWindow = null;
+  if (besideCurrentWindow) {
+    if (!details.width) {
+      details.width = 235;
+    }
+    currentWindow = await browser.windows.get(parentWindowId);
+    if (currentWindow.state !== 'normal') {
+      currentWindow = await browser.windows.update(currentWindow.id, { state: 'normal' });
+    }
+
+    const offset = details.width + (+besideCurrentWindow_spaceBetween);
+    let x = currentWindow.left - offset;
+    if (x < 0) {
+      x = 0;
+      // Move window to the right to leave more space:
+      currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
+    }
+
+    Object.assign(details, {
+      top: currentWindow.top,
+      left: x,
+    });
+    if (!details.height) {
+      details.height = currentWindow.height;
+    }
+  }
+
+  // Create window:
+  const window = await browser.windows.create(details);
+
+  let customOp;
+  if (handleNewWindow) {
+    customOp = handleNewWindow(window);
+  }
+
+  if (besideCurrentWindow) {
+    // Track window to simulate docking:
+    const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: parentWindowId };
+
+    browser.windows.get(trackedSidebarInfo.parentWindowId)
+      .then(window => (trackedSidebarInfo.parentWindow = window, true))
+      .catch(error => (console.error('Failed to cache parentWindow for opened sidebar window\nError: ', error), false));
+
+    addTrackedWindow(trackedSidebarInfo);
+
+    if (besideCurrentWindow_simulateDocking_refocusParent) {
+      browser.windows.update(parentWindowId, { focused: true }).catch(error => console.error('Failed to re-focus parent window after creating docked sidebar window!\nError:', error));
+    }
+  }
+
+  let changedPos = false;
+  if (besideCurrentWindow && currentWindow !== null) {
+    // Double check offset (window width/height might be different than specified):
+
+    const offset = window.width + (+besideCurrentWindow_spaceBetween);
+    let x = currentWindow.left - offset;
+    if (x < 0) {
+      x = 0;
+      // Move window to the right to leave more space:
+      currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
+    }
+
+    if (details.top !== currentWindow.top) {
+      details.top = currentWindow.top;
+      changedPos = true;
+    }
+    if (details.left !== x) {
+      details.left = x;
+      changedPos = true;
+    }
+  }
+
+  // Apply position after creation if the window isn't of the normal type or if window width/height is different then expected:
+  if (details.type || changedPos) {
+    const posDetails = {};
+    if (details.left || details.left === 0) {
+      posDetails.left = details.left;
+    }
+    if (details.top || details.top === 0) {
+      posDetails.top = details.top;
+    }
+    if (Object.keys(posDetails).length > 0) {
+      await browser.windows.update(window.id, posDetails).catch(error => console.error('Failed to move sidebar window after it was created!\nError: ', error));
+    }
+  }
+
+  await customOp;
+
+  return window;
+}
+
+
+// eslint-disable-next-line valid-jsdoc
+/**
+ * Open Tree Style Tab's sidebar page in a tab.
+ *
+ * @param {Object} Params Determines how the sidebar page is opened.
+ * @param {number | null} [Params.windowId] The window id that the tab should be opened in. `null` or unspecified to use the currently selected window.
+ * @param {boolean} [Params.createNewWindow] Move the tab to a new window after it has been created.
+ * @param {boolean} [Params.openAfterCurrent] Open the tab after the currently active tab.
+ * @param {boolean} [Params.childOfCurrent] Open the new tab as a child of the current tab.
+ * @param {boolean} [Params.openDirectlyInNewWindow] Don't open the new tab in the current window at all, instead open it directly in the new window. To track the current window correctly this requires Tree Style Tab v3.5.6 or later.
+ * @param {Parameters<typeof createDockedWindow>[0]} [Params.windowSettings] Specify how the new window should be created.
+ * @param {null | number} [Params.delayBeforeWindowSeperationInMilliseconds] Delay in milliseconds before moving the created tab to a new window.
+ * @returns {Promise<BrowserTab | null | false>} The opened tab. `false` if Tree Style Tab wasn't found. `null` for other issues.
+ */
+async function openTreeStyleTabSidebarInTab({
+  windowId = null,
+  createNewWindow = false,
+  openAfterCurrent = false,
+  childOfCurrent = false,
+  openDirectlyInNewWindow = false,
+  windowSettings = null,
+  delayBeforeWindowSeperationInMilliseconds = null
+} = {}) {
+
 
   // #region Info
 
-  const queryDetails = { active: true };
-  if (windowId || windowId === 0) {
-    queryDetails.windowId = windowId;
-  } else {
-    queryDetails.currentWindow = true;
+  const [internalId, activeTab] = await Promise.all([
+    (async () => {
+      if (!await pingTST()) {
+        return false;
+      }
+
+      if (settings.useModernSidebarUrl) {
+        return null;
+      }
+
+
+      // #region Determine Tree Style Tab's internal id
+
+      const internalId = await getInternalTSTId();
+      if (!internalId) {
+        await handleFailedToDetermineTreeStyleTabInternalId();
+        return null;
+      }
+
+      // #endregion Determine Tree Style Tab's internal id
+
+
+      return internalId;
+    })(),
+    (async () => {
+      const queryDetails = { active: true };
+      if (windowId || windowId === 0) {
+        queryDetails.windowId = windowId;
+      } else {
+        queryDetails.currentWindow = true;
+      }
+      /** @type {BrowserTab[]} */
+      const [activeTab,] = await browser.tabs.query(queryDetails);
+      return activeTab;
+    })(),
+  ]);
+
+  if (internalId === false) {
+    // TST not found/installed/enabled:
+    return false;
   }
-  let [activeTab,] = await browser.tabs.query(queryDetails);
-  if (!activeTab) {
-    return;
+  if ((!internalId && !settings.useModernSidebarUrl) || !activeTab) {
+    // Failed in someway to find necessary information:
+    return null;
   }
+
+  const sidebarURL = getSidebarURL({ internalId, windowId: activeTab.windowId });
+
+  // #endregion Info
+
+
+  if (openDirectlyInNewWindow) {
+    const window = await createDockedWindow(Object.assign({
+      url: sidebarURL,
+      incognito: activeTab.incognito,
+      parentWindowId: activeTab.windowId,
+    }, windowSettings));
+    return window.tabs[0];
+  }
+
+
   const openAfterActiveDetails = ({ pinned = false } = {}) => {
     const details = { windowId: activeTab.windowId, index: activeTab.index + 1 };
     if (pinned) {
@@ -346,33 +597,31 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
     }
     return details;
   };
-  let tab;
-
-  // #endregion Info
-
-
-  // #region Determine Tree Style Tab's internal id
-
-  let internalId = await getInternalTSTId();
-  if (!internalId) {
-    await handleFailedToDetermineTreeStyleTabInternalId();
-    return null;
-  }
-
-  // #endregion Determine Tree Style Tab's internal id
 
 
   // #region Open Sidebar Page
 
+  /** @type {BrowserTab} */
+  let tab;
+  /** @type {BrowserTab} */
   let sidebarTab;
-  let sidebarURL = getSidebarURL(internalId);
 
+  // @ts-ignore
+  /** @type { ReturnType<typeof getPromiseWithResolve> extends Promise<infer R> ? R : never} */
   let promiseInfo;
+
   try {
     promiseInfo = await getPromiseWithResolve();
 
     // Listener for loading complete:
-    let loadListener = (tabId, changeInfo, tab) => {
+    /**
+     * Listener for update events.
+     *
+     * @param {number} tabId Changed tab id.
+     * @param {Object} changeInfo Info about change.
+     * @param {BrowserTab} tab The changed tab.
+     */
+    const loadListener = (tabId, changeInfo, tab) => {
       if (!sidebarTab || sidebarTab.id !== tabId) {
         return;
       }
@@ -418,111 +667,11 @@ async function openTreeStyleTabSidebarInTab({ windowId = null, createNewWindow =
 
   if (createNewWindow) {
     const moveToNewWindow = async () => {
-      // Passed settings:
-      const {
-        popup = false,
-        popup_hidden = false,
-        width = -1,
-        height = -1,
-        besideCurrentWindow = false,
-        besideCurrentWindow_spaceBetween = -1,
-        besideCurrentWindow_simulateDocking_refocusParent = false,
-      } = windowSettings || {};
-
-      // Configure new window:
-      const details = {
-        incognito: activeTab.incognito,
+      await createDockedWindow(Object.assign({
         tabId: tab.id,
-      };
-      if (popup) {
-        details.type = popup_hidden ? 'panel' : 'popup';
-      }
-      if (width && width > 0) {
-        details.width = +width;
-      }
-      if (height && height > 0) {
-        details.height = +height;
-      }
-      let currentWindow = null;
-      if (besideCurrentWindow) {
-        if (!details.width) {
-          details.width = 235;
-        }
-        currentWindow = await browser.windows.get(activeTab.windowId);
-        if (currentWindow.state !== 'normal') {
-          currentWindow = await browser.windows.update(currentWindow.id, { state: 'normal' });
-        }
-
-        const offset = details.width + (+besideCurrentWindow_spaceBetween);
-        let x = currentWindow.left - offset;
-        if (x < 0) {
-          x = 0;
-          // Move window to the right to leave more space:
-          currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
-        }
-
-        Object.assign(details, {
-          top: currentWindow.top,
-          left: x,
-        });
-        if (!details.height) {
-          details.height = currentWindow.height;
-        }
-      }
-
-      // Create window:
-      const window = await browser.windows.create(details);
-
-      if (besideCurrentWindow) {
-        // Track window to simulate docking:
-        const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: activeTab.windowId };
-
-        browser.windows.get(trackedSidebarInfo.parentWindowId)
-          .then(window => (trackedSidebarInfo.parentWindow = window, true))
-          .catch(error => (console.error('Failed to cache parentWindow for opened sidebar window\nError: ', error), false));
-
-        addTrackedWindow(trackedSidebarInfo);
-
-        if (besideCurrentWindow_simulateDocking_refocusParent) {
-          browser.windows.update(activeTab.windowId, { focused: true }).catch(error => console.error('Failed to re-focus parent window after creating docked sidebar window!\nError:', error));
-        }
-      }
-
-      let changedPos = false;
-      if (besideCurrentWindow && currentWindow !== null) {
-        // Double check offset (window width/height might be different than specified):
-
-        const offset = window.width + (+besideCurrentWindow_spaceBetween);
-        let x = currentWindow.left - offset;
-        if (x < 0) {
-          x = 0;
-          // Move window to the right to leave more space:
-          currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
-        }
-
-        if (details.top !== currentWindow.top) {
-          details.top = currentWindow.top;
-          changedPos = true;
-        }
-        if (details.left !== x) {
-          details.left = x;
-          changedPos = true;
-        }
-      }
-
-      // Apply position after creation if the window isn't of the normal type or if window width/height is different then expected:
-      if (details.type || changedPos) {
-        const posDetails = {};
-        if (details.left || details.left === 0) {
-          posDetails.left = details.left;
-        }
-        if (details.top || details.top === 0) {
-          posDetails.top = details.top;
-        }
-        if (Object.keys(posDetails).length > 0) {
-          await browser.windows.update(window.id, posDetails).catch(error => console.error('Failed to move sidebar window after it was created!\nError: ', error));
-        }
-      }
+        incognito: activeTab.incognito,
+        parentWindowId: activeTab.windowId,
+      }, windowSettings));
     };
     if (delayBeforeWindowSeperationInMilliseconds && delayBeforeWindowSeperationInMilliseconds > 0) {
       trackedDelay(delayBeforeWindowSeperationInMilliseconds).then(() => moveToNewWindow());
@@ -544,6 +693,7 @@ function getDefaultMoveDetails(overrides = {}, { dockedWindow = false } = {}) {
     openAfterCurrent: settings.openAfterCurrentTab,
     childOfCurrent: settings.openAsChildOfCurrentTab,
     delayBeforeWindowSeperationInMilliseconds: settings.delayBeforeWindowSeperationInMilliseconds,
+    openDirectlyInNewWindow: overrides.createNewWindow && !settings.useTemporaryTabWhenOpeningNewWindow,
   };
   // Pass new window settings:
   if (dockedWindow) {
@@ -560,10 +710,52 @@ function getDefaultMoveDetails(overrides = {}, { dockedWindow = false } = {}) {
   return Object.assign(info, overrides);
 }
 
+// Notifications for changes in permissions isn't provided by the extension API yet so we define our own and make sure to invoke them when we do anything that could change them:
+export const onPermissionsChange = new EventManager();
+
+// Firefox 77 have permission events!
+try {
+  if (browser.permissions.onAdded) {
+    browser.permissions.onAdded.addListener((permissions) => {
+      onPermissionsChange.fire(permissions, true);
+    });
+  }
+  if (browser.permissions.onRemoved) {
+    browser.permissions.onRemoved.addListener((permissions) => {
+      onPermissionsChange.fire(permissions, false);
+    });
+  }
+} catch (error) {
+  console.error('Failed to listen to permission events.', error);
+}
+
+
 
 settingsTracker.start.finally(async () => {
 
   // #region Settings
+
+  const checkIfStoreSessionsData = async () => {
+    try {
+      const granted = await browser.permissions.contains({ permissions: ['sessions'] });
+      setIsStoringSessionData(granted && settings.newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData);
+      if (granted && !settings.newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData) {
+        // Remove session data:
+        const windows = await browser.windows.getAll({ populate: false });
+        await Promise.all(windows.map(async (window) => {
+          if (browser.sessions) {
+            try {
+              await browser.sessions.removeWindowValue(window.id, kWINDOW_DATA_KEY_DOCKING_INFO);
+            } catch (error) {
+              console.error('Failed to remove session data from window.\nWindow:', window, '\nError: ', error);
+            }
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to check "sessions" permission.\nError: ', error);
+    }
+  };
 
   settingsTracker.onChange.addListener((changes) => {
     if (changes.fixSidebarStyle || changes.requestTreeStyleTabPermission_tabs) {
@@ -589,7 +781,12 @@ settingsTracker.start.finally(async () => {
     )) {
       checkSimulateDocking();
     }
+    if (changes.newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData) {
+      checkIfStoreSessionsData();
+    }
   });
+  checkIfStoreSessionsData();
+  onPermissionsChange.addListener(() => checkIfStoreSessionsData());
 
   // #endregion Settings
 
@@ -691,15 +888,35 @@ settingsTracker.start.finally(async () => {
 
   // #region Message
 
-  browser.runtime.onMessage.addListener(async (message) => {
+  const portManager = new PortManager();
+  onPermissionsChange.addListener(function () {
+    portManager.fireEvent('permissionChanged', Array.from(arguments));
+  });
+  portManager.onMessage.addListener(async (message, sender, disposables) => {
     if (!message.type)
       return;
     switch (message.type) {
-      case 'get-tst-style': {
+      case messageTypes.getTstStyle: {
         return getTSTStyle();
       } break;
-      case 'handle-failed-get-internal-id': {
+      case messageTypes.handleFailedToGetInternalId: {
         return handleFailedToDetermineTreeStyleTabInternalId();
+      } break;
+
+      case messageTypes.permissionsChanged: {
+        onPermissionsChange.fire(message.permission, message.value);
+      } break;
+
+      case messageTypes.requestPermission: {
+        let requester = new ToolbarPermissionRequest(message.permission);
+        if (disposables && disposables instanceof DisposableCollection) {
+          disposables.trackDisposables(requester);
+        }
+        let result = await requester.result;
+        if (result) {
+          onPermissionsChange.fire(message.permission, await browser.permissions.contains(message.permission));
+        }
+        return result;
       } break;
     }
   });
@@ -721,30 +938,34 @@ settingsTracker.start.finally(async () => {
 
         // #region Get Startup info
 
+        /** @type {[BrowserWindow[], boolean]} */
         let [
           allWindows,
+          /** `true` if the browser just started. */
           browserStartup,
-          tstInternalId,
         ] = await Promise.all([
           browser.windows.getAll({ populate: true }),
           (async function () {
-            const [
-              installed,
-              started
-            ] = [
-                new Promise((resolve, reject) => {
-                  browser.runtime.onInstalled.addListener(({ previousVersion, reason, temporary }) => {
-                    resolve(true);
-                  });
-                  delay(1000).then(() => resolve(false));
-                }),
-                new Promise((resolve, reject) => {
-                  browser.runtime.onStartup.addListener(() => {
-                    resolve(true);
-                  });
-                  delay(1000).then(() => resolve(false));
-                }),
-              ];
+            const installed = new Promise((resolve, reject) => {
+              try {
+                browser.runtime.onInstalled.addListener(({ previousVersion, reason, temporary }) => {
+                  resolve(true);
+                });
+                delay(1000).then(() => resolve(false));
+              } catch (error) {
+                reject(error);
+              }
+            });
+            const started = new Promise((resolve, reject) => {
+              try {
+                browser.runtime.onStartup.addListener(() => {
+                  resolve(true);
+                });
+                delay(1000).then(() => resolve(false));
+              } catch (error) {
+                reject(error);
+              }
+            });
 
             if (await started) {
               // Browser started (not triggered if started into incognito mode):
@@ -758,15 +979,13 @@ settingsTracker.start.finally(async () => {
             // If no startup info and no install info then assume (will happen for extension disable/enable):
             return false;
           })(),
-          getInternalTSTId({ openGroupTab: false }),
         ]);
 
         if (browserStartup) {
           // Wait for all windows to be created:
           await new Promise((resolve, reject) => {
-            var started = false;
             try {
-              var disableMonitorsAndResolve = () => {
+              const disableMonitorsAndResolve = () => {
                 try {
                   browser.tabs.onActivated.removeListener(tabActivated);
                   if (timeoutId !== undefined) {
@@ -778,31 +997,29 @@ settingsTracker.start.finally(async () => {
                 }
               };
 
-              var timeoutId = undefined;
-              var tabCount = 0;
-              var checkTabCount = () => {
+              let timeoutId = undefined;
+              let tabCount = 0;
+              const checkTabCount = () => {
+                if (timeoutId !== undefined) return;
                 timeoutId = setTimeout(async () => {
                   timeoutId = undefined;
 
-                  if (started)
-                    return;
-
-                  let newTabCount = await browser.tabs.query({}).length;
+                  const newTabCount = await browser.tabs.query({}).length;
 
                   if (newTabCount === tabCount) {
                     disableMonitorsAndResolve();
                   } else {
                     tabCount = newTabCount;
-                    if (!started) {
-                      checkTabCount();
-                    }
+                    // Queue the next check:
+                    checkTabCount();
                   }
                 }, 1000);
               };
               checkTabCount();
 
 
-              var tabActivated = (activeInfo) => {
+              const tabActivated = (activeInfo) => {
+                // If the user can change tab then we are probably in a state where its possible to do more work:
                 disableMonitorsAndResolve();
               };
               browser.tabs.onActivated.addListener(tabActivated);
@@ -818,83 +1035,7 @@ settingsTracker.start.finally(async () => {
         // #endregion Get Startup info
 
 
-        // #region Find Sidebar Windows
-
-        const windowsWithOneTab = allWindows.filter(window => window.tabs.length === 1);
-        if (windowsWithOneTab.length > 0) {
-          // Wait for TST to start:
-          await new Promise((resolve, reject) => {
-            try {
-              let intervalId = null;
-              let timeoutId = null;
-              const done = () => {
-                try {
-                  if (timeoutId !== null) {
-                    clearTimeout(timeoutId);
-                    timeoutId = null;
-                  }
-                  if (intervalId !== null) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                  }
-                } finally {
-                  resolve();
-                }
-              };
-              timeoutId = setTimeout(() => (timeoutId = null, done()), 30000);
-              intervalId = setInterval(() => pingTST().then((available) => { if (available) done(); }), 1000);
-            } catch (error) {
-              reject(error);
-            }
-          });
-        }
-
-        const windowsWithTSTInfo = await Promise.all(
-          windowsWithOneTab.map(window =>
-            getTabsFromTST(window.id, true)
-              .catch(error => (console.error('Failed to get TST tabs for window with id ' + window.id + '!\nError: ', error), null))
-              .then(tstTabs => ([window, tstTabs]))
-          ));
-
-        let sidebarURL = tstInternalId && windowsWithTSTInfo.length > 0 ? getSidebarURL(tstInternalId) : null;
-
-        // Determine which windows are sidebar windows:
-        const sidebarWindows = await (Promise.all(windowsWithTSTInfo.map(async ([window, tstTabs]) => {
-          if (tstTabs) {
-            if (!sidebarURL) {
-              sidebarURL = getSidebarURL(await getInternalTSTId());
-            }
-            if ((await Promise.all(tstTabs.map(async (tab) => {
-              if (!('url' in tab)) {
-                try {
-                  // Doesn't have the "tabs" permission in Tree Style Tab's option page.
-                  const firefoxTab = await browser.tabs.get(tab.id);
-                  // Updated tab info:
-                  Object.assign(tab, firefoxTab);
-                } catch (error) {
-                  console.error('Failed to get tab from Firefox.\nTabId: ', tab.id, '\nError:\n', error);
-                }
-              }
-              return tab.url !== sidebarURL;
-            }))).some(result => result)) {
-              // This window had a tab that didn't have the sidebar URL.
-              return false;
-            }
-          } else {
-            if (window.type !== 'panel') {
-              return false;
-            }
-          }
-          // Assume this window is a sidebar window:
-          return true;
-        })).then(filter => windowsWithTSTInfo.filter((value, index) => filter[index])));
-
-
-        const sidebarWindowIds = sidebarWindows.map(([window, tstTabs]) => window.id);
-        const possibleParentWindows = allWindows.filter(window => window.type === 'normal' && !sidebarWindowIds.includes(window.id));
-
-        // #endregion Find Sidebar Windows
-
+        const sidebarInfo = await findSidebarWindows({ allWindows, xSpaceBetweenWindows: settings.newWindow_besideCurrentWindow_spaceBetween });
 
         const newWindowOverrides = { createNewWindow: true };
         if (settings.newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation >= 0) {
@@ -902,39 +1043,24 @@ settingsTracker.start.finally(async () => {
         }
 
 
-        if (settings.newWindow_besideCurrentWindow_autoDetectAtStartup && sidebarWindows.length > 0) {
-          if (sidebarWindows.length > 0 && possibleParentWindows.length === 0) {
-            await browser.windows.create({});
+        // #region Find docked sidebar windows and start tracking them
+
+        if (settings.newWindow_besideCurrentWindow_autoDetectAtStartup && sidebarInfo.sidebarWindows.length > 0) {
+          if (sidebarInfo.sidebarWindows.length > 0 && sidebarInfo.possibleParentWindows.length === 0) {
+            /** @type { Omit<BrowserWindow, 'tabs'>[] } */
+            const allWindows = await browser.windows.getAll({ populate: false });
+            const isSidebarWindow = allWindows.map(window => sidebarInfo.sidebarWindows.some(info => info.window.id === window.id));
+            const existsNonSidebarWindow = isSidebarWindow.some(isSidebar => !isSidebar);
+            if (!existsNonSidebarWindow) {
+              // Ensure that even if all sidebar windows are closed there will be at least one window left:
+              await browser.windows.create({});
+            }
           }
 
 
-          await Promise.all(sidebarWindows.map(async ([window, tstTabs]) => {
-            let parentX = window.left + window.width + settings.newWindow_besideCurrentWindow_spaceBetween;
-            let parentY = window.top;
+          await Promise.all(sidebarInfo.sidebarWindows.map(async ({ window, parentWindow }) => {
 
-            let otherPossibleParents = possibleParentWindows
-              .filter(parent => parent.id !== window.id && parent.incognito === window.incognito)
-              // Distance to parent from expect position:
-              .map(parent => ([parent, Math.abs(parent.left - parentX), Math.abs(parent.top - parentY)]))
-              // Total distance:
-              .map(([parent, x, y]) => [parent, x, y, Math.sqrt(x * x + y * y)])
-              // Sort based on distance:
-              .sort(([, distA], [, distB]) => distA - distB);
-
-            let [[possibleParent, xDistToParent, yDistToParent, distToPossibleParent],] = otherPossibleParents;
-
-            if (distToPossibleParent > 3) {
-              otherPossibleParents = otherPossibleParents.sort(([winA, winAX, winAY, winAD], [winB, winBX, winBY, winBD]) => winAX - winBX);
-              [[possibleParent, xDistToParent, yDistToParent, distToPossibleParent],] = otherPossibleParents;
-            }
-
-
-            if (xDistToParent > 10) {
-              // No parent found:
-              possibleParent = null;
-            }
-
-            if (!possibleParent) {
+            if (!parentWindow) {
               if (browserStartup) {
                 await browser.windows.remove(window.id);
               }
@@ -942,26 +1068,49 @@ settingsTracker.start.finally(async () => {
             }
 
             if (browserStartup) {
-              // Need to close and reopen window since the page will have targeted the wrong window id:
-              const closePromise = browser.windows.remove(window.id);
-              openTreeStyleTabSidebarInTab(getDefaultMoveDetails(Object.assign({ windowId: possibleParent.id }, newWindowOverrides), { dockedWindow: true }));
-              await closePromise;
-            } else {
-              // Need to track this window's id:
-              if (isDockedWindow(window.id)) {
-                // Already tracked:
+              if (!settings.useTemporaryTabWhenOpeningNewWindow) {
+                // Use Tree Style Tab's new "windowId" query parameter. Change the tab's URL to one with the parent window's id instead of closing the window.
+                let sidebarUrl = null;
+                if (settings.useModernSidebarUrl) {
+                  sidebarUrl = getSidebarURL({ windowId: parentWindow.id });
+                } else {
+                  const internalId = await getInternalTSTId();
+                  if (internalId) {
+                    sidebarUrl = getSidebarURL({ internalId, windowId: parentWindow.id });
+                  } else {
+                    console.warn('Failed to get internal Tree Style Tab id. Can\'t update old "sidebar" page\'s URL to point to new parent windowId.\nOld sidebar window: ', window, '\nparentWindow: ', parentWindow);
+                  }
+                }
+                if (sidebarUrl) {
+                  await browser.tabs.update(window.tabs[0].id, { url: sidebarUrl });
+                }
+              } else {
+                // Need to close and reopen window since the page will have targeted the wrong window id:
+                const closePromise = browser.windows.remove(window.id);
+                openTreeStyleTabSidebarInTab(getDefaultMoveDetails(Object.assign({ windowId: parentWindow.id }, newWindowOverrides), { dockedWindow: true }));
+                await closePromise;
                 return;
               }
-
-              const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: possibleParent.id, parentWindow: possibleParent };
-
-              addTrackedWindow(trackedSidebarInfo);
             }
+            // Need to track this window's id:
+            if (isDockedWindow(window.id)) {
+              // Already tracked:
+              return;
+            }
+
+            const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: parentWindow.id, parentWindow };
+
+            addTrackedWindow(trackedSidebarInfo);
           }));
         }
 
+        // #endregion Find docked sidebar windows and start tracking them
+
+
+        // #region Open a docked sidebar window for each open window
+
         if (settings.newWindow_besideCurrentWindow_autoOpenAtStartup && browserStartup) {
-          for (const window of possibleParentWindows) {
+          for (const window of sidebarInfo.possibleParentWindows) {
             if (isParentWindow(window.id)) {
               // This window already has an open sidebar window:
               continue;
@@ -969,6 +1118,9 @@ settingsTracker.start.finally(async () => {
             openTreeStyleTabSidebarInTab(getDefaultMoveDetails(Object.assign({ windowId: window.id }, newWindowOverrides), { dockedWindow: true }));
           }
         }
+
+        // #endregion Open a docked sidebar window for each open window
+
 
       } catch (error) {
         console.error('Failed to auto detect and (re)open sidebar windows at startup!\nError: ', error);

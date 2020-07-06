@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html class="support-dark-theme">
+
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="options.css">
@@ -117,26 +120,6 @@
         <br />
 
         <fieldset>
-            <legend class="message-options_legend_PinWorkaround"></legend>
-
-            <div>
-                <label>
-                    <input id="pinTabsBeforeMove" type="checkbox">
-                    <text class="message-options_pinTabsBeforeMove"></text>
-                </label>
-            </div>
-            <br />
-
-            <div class="requires-pinTabsBeforeMove">
-                <label>
-                    <input id="pinTabsBeforeMove_OnlyAfterCurrent" type="checkbox">
-                    <text class="message-options_pinTabsBeforeMove_OnlyAfterCurrent"></text>
-                </label>
-            </div>
-        </fieldset>
-        <br />
-
-        <fieldset>
             <legend class="message-options_legend_TabPosition"></legend>
 
             <label>
@@ -154,14 +137,7 @@
             </div>
         </fieldset>
         <br />
-
-        <p>
-            <span class="message-options_delayBeforeWindowSeparation"></span>
-            <input id="delayBeforeWindowSeperationInMilliseconds" type="number" min="-1">
-            <span class="message-options_Milliseconds"></span>
-        </p>
         <br />
-
 
         <div class="sectionArea collapsed">
             <header id="windowSettingsHeader" class="message-options_section_NewWindowSettings"></header>
@@ -221,12 +197,22 @@
                             <text class="message-options_newWindow_besideCurrentWindow_autoDetectAtStartup"></text>
                         </label>
                     </div>
+                    <br />
+
+                    <div class="requires-newWindow_besideCurrentWindow_autoDetectAtStartup">
+                        <label>
+                            <input id="newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData" type="checkbox">
+                            <text
+                                class="message-options_newWindow_besideCurrentWindow_autoDetectAtStartup_SessionData"></text>
+                        </label>
+                    </div>
 
                     <div>
                         <span class="requires-newWindow_besideCurrentWindow_autoDetectAtStartup"></span>
                         <span class="requires-newWindow_besideCurrentWindow_autoOpenAtStartup"></span>
                         <p class="requiresAny">
-                            <span class="message-options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation"></span>
+                            <span
+                                class="message-options_newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation"></span>
                             <input id="newWindow_besideCurrentWindow_autoDetectAtStartup_delayBeforeWindowSeparation"
                                 type="number">
                             <span class="message-options_Milliseconds"></span>
@@ -235,120 +221,160 @@
                 </fieldset>
                 <br />
 
-                <fieldset class="requires-newWindow_besideCurrentWindow">
-                    <legend class="message-options_legend_window_SimulateDocking"></legend>
+                <div class="requires-newWindow_besideCurrentWindow">
+                    <div id="simulateDockingArea" class="sectionArea collapsed">
+                        <header class="message-options_legend_window_SimulateDocking"></header>
 
-                    <p>
-                        <span class="message-options_newWindow_besideCurrentWindow_simulateDocking_slowInterval"></span>
-                        <input id="newWindow_besideCurrentWindow_simulateDocking_slowInterval" type="number" min="-1">
-                        <span class="message-options_Milliseconds"></span>
-                    </p>
-
-                    <div class="requires-newWindow_besideCurrentWindow_simulateDocking_slowInterval">
-
-                        <p class="">
-                            <span class="message-options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
-                            <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number" min="-1">
+                        <p>
+                            <span
+                                class="message-options_newWindow_besideCurrentWindow_simulateDocking_slowInterval"></span>
+                            <input id="newWindow_besideCurrentWindow_simulateDocking_slowInterval" type="number"
+                                min="-1">
                             <span class="message-options_Milliseconds"></span>
                         </p>
 
-                        <div class="">
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
-                                <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_minimize"></text>
-                            </label>
-                        </div>
-                        <br />
+                        <div class="requires-newWindow_besideCurrentWindow_simulateDocking_slowInterval">
 
-                        <fieldset>
-                            <legend class="message-options_legend_window_AutoClose"></legend>
+                            <p class="">
+                                <span
+                                    class="message-options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
+                                <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number"
+                                    min="-1">
+                                <span class="message-options_Milliseconds"></span>
+                            </p>
 
                             <div class="">
                                 <label>
-                                    <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose" type="checkbox">
-                                    <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_autoClose"></text>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
+                                    <text
+                                        class="message-options_newWindow_besideCurrentWindow_simulateDocking_minimize"></text>
                                 </label>
                             </div>
                             <br />
 
-                            <fieldset class="requires-newWindow_besideCurrentWindow_simulateDocking_autoClose">
-                                <legend class="message-options_legend_window_AutoClose_FixDefaultWindowSize"></legend>
+                            <fieldset>
+                                <legend class="message-options_legend_window_AutoClose"></legend>
 
-                                <div>
+                                <div class="">
                                     <label>
-                                        <input id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose"
                                             type="checkbox">
-                                        <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"></text>
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_autoClose"></text>
                                     </label>
                                 </div>
                                 <br />
 
-                                <div class="requires-newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState">
+                                <fieldset class="requires-newWindow_besideCurrentWindow_simulateDocking_autoClose">
+                                    <legend class="message-options_legend_window_AutoClose_FixDefaultWindowSize">
+                                    </legend>
+
+                                    <div>
+                                        <label>
+                                            <input
+                                                id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"
+                                                type="checkbox">
+                                            <text
+                                                class="message-options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState"></text>
+                                        </label>
+                                    </div>
+                                    <br />
+
+                                    <div
+                                        class="requires-newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState">
+                                        <label>
+                                            <input
+                                                id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"
+                                                type="checkbox">
+                                            <text
+                                                class="message-options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"></text>
+                                        </label>
+                                    </div>
+                                </fieldset>
+                            </fieldset>
+                            <br />
+
+                            <fieldset>
+                                <legend class="message-options_legend_window_WindowFocus"></legend>
+
+                                <div class="">
                                     <label>
-                                        <input id="newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus"
                                             type="checkbox">
-                                        <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_restoreLastSidebarToParentState_onlyLastWindow"></text>
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_autoFocus"></text>
+                                    </label>
+                                </div>
+                                <br />
+
+                                <div class="">
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent"
+                                            type="checkbox">
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_refocusParent"></text>
                                     </label>
                                 </div>
                             </fieldset>
-                        </fieldset>
-                        <br />
-
-                        <fieldset>
-                            <legend class="message-options_legend_window_WindowFocus"></legend>
-
-                            <div class="">
-                                <label>
-                                    <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus" type="checkbox">
-                                    <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_autoFocus"></text>
-                                </label>
-                            </div>
                             <br />
 
-                            <div class="">
-                                <label>
-                                    <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent" type="checkbox">
-                                    <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_refocusParent"></text>
-                                </label>
-                            </div>
-                        </fieldset>
-                        <br />
+                            <fieldset>
+                                <legend class="message-options_legend_window_WithAndHeight"></legend>
 
-                        <div class="">
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight" type="checkbox">
-                                <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_syncHeight"></text>
-                            </label>
-                        </div>
-                        <br />
+                                <div class="">
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight"
+                                            type="checkbox">
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_syncHeight"></text>
+                                    </label>
+                                </div>
+                                <br />
 
-                        <div class="">
-                            <label>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_syncWidth" type="checkbox">
-                                <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_syncWidth"></text>
-                            </label>
-                        </div>
-                        <br />
-
-                        <fieldset>
-                            <legend class="message-options_legend_window_MultipleSidebarWindows"></legend>
-
-                            <div>
-                                <label>
-                                    <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight" type="checkbox">
-                                    <text class="message-options_newWindow_besideCurrentWindow_simulateDocking_tileHeight"></text>
-                                </label>
-                            </div>
+                                <div class="">
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_syncWidth"
+                                            type="checkbox">
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_syncWidth"></text>
+                                    </label>
+                                </div>
+                            </fieldset>
                             <br />
 
-                            <p class="requires-newWindow_besideCurrentWindow_simulateDocking_tileHeight">
-                                <span class="message-options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"></span>
-                                <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin" type="number">
-                                <span class="message-options_Pixels"></span>
-                            </p>
-                        </fieldset>
+                            <fieldset>
+                                <legend class="message-options_legend_window_MultipleSidebarWindows"></legend>
+
+                                <div class="requires-!newWindow_besideCurrentWindow_simulateDocking_tileHeight">
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_tileWidth"
+                                            type="checkbox">
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_tileWidth"></text>
+                                    </label>
+                                </div>
+                                <br />
+
+                                <div>
+                                    <label>
+                                        <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight"
+                                            type="checkbox">
+                                        <text
+                                            class="message-options_newWindow_besideCurrentWindow_simulateDocking_tileHeight"></text>
+                                    </label>
+                                </div>
+
+                                <p class="requires-newWindow_besideCurrentWindow_simulateDocking_tileHeight">
+                                    <span
+                                        class="message-options_newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"></span>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_tileHeight_heightMargin"
+                                        type="number">
+                                    <span class="message-options_Pixels"></span>
+                                </p>
+                            </fieldset>
+                        </div>
                     </div>
-                </fieldset>
+                </div>
             </fieldset>
             <br />
 
@@ -366,46 +392,109 @@
             </p>
         </div>
 
-        <div class="sectionArea collapsed">
-            <header id="styleHeader" class="message-options_section_TreeStyleTabStyle"></header>
+        <br />
+        <fieldset>
+            <legend class="message-options_legend_LegacyTST"></legend>
+            <br />
+            <div id="temporaryTabArea" class="sectionArea collapsed">
+                <header class="message-options_section_TemporaryTab"></header>
 
-            <div>
+                <div>
+                    <label>
+                        <input id="useTemporaryTabWhenOpeningNewWindow" type="checkbox">
+                        <text class="message-options_useTemporaryTabWhenOpeningNewWindow"></text>
+                    </label>
+                </div>
+                <br />
+
+                <fieldset class="requires-useTemporaryTabWhenOpeningNewWindow">
+                    <legend class="message-options_legend_PinWorkaround"></legend>
+
+                    <div>
+                        <label>
+                            <input id="pinTabsBeforeMove" type="checkbox">
+                            <text class="message-options_pinTabsBeforeMove"></text>
+                        </label>
+                    </div>
+                    <br />
+
+                    <div class="requires-pinTabsBeforeMove">
+                        <label>
+                            <input id="pinTabsBeforeMove_OnlyAfterCurrent" type="checkbox">
+                            <text class="message-options_pinTabsBeforeMove_OnlyAfterCurrent"></text>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <p class="requires-useTemporaryTabWhenOpeningNewWindow">
+                    <span class="message-options_delayBeforeWindowSeparation"></span>
+                    <input id="delayBeforeWindowSeperationInMilliseconds" type="number" min="-1">
+                    <span class="message-options_Milliseconds"></span>
+                </p>
+            </div>
+
+            <div class="sectionArea collapsed">
+                <header id="styleHeader" class="message-options_section_TreeStyleTabStyle"></header>
+
+                <div>
+                    <label>
+                        <input id="fixSidebarStyle" type="checkbox">
+                        <text class="message-options_fixSidebarStyle"></text>
+                    </label>
+                </div>
+                <br />
+
+                <label class="message-options_TreeStyleTabStyle_Info"></label>
+                <br />
+                <textarea id="currentTreeStyleTabStyle" style="width: 100%;" rows="15" readonly="true"></textarea>
+            </div>
+
+            <div id="tstInternalIdArea" class="sectionArea collapsed">
+                <header class="message-options_section_TreeStyleTabId"></header>
+
+                <label class="message-options_treeStyleTabInternalId_info textSelectable"></label>
+                <br />
+                <br />
+
                 <label>
-                    <input id="fixSidebarStyle" type="checkbox">
-                    <text class="message-options_fixSidebarStyle"></text>
+                    <input id="useModernSidebarUrl" type="checkbox">
+                    <text class="message-options_useModernSidebarUrl"></text>
                 </label>
-            </div>
-            <br />
+                <br />
+                <br />
 
-            <label class="message-options_TreeStyleTabStyle_Info"></label>
-            <br />
-            <textarea id="currentTreeStyleTabStyle" style="width: 100%;" rows=15 readonly=true></textarea>
-        </div>
+                <label>
+                    <input id="requestTreeStyleTabPermission_tabs" type="checkbox">
+                    <text class="message-options_requestTreeStyleTabPermission_tabs"></text>
+                </label>
+                <br />
+                <br />
 
-        <div class="sectionArea collapsed">
-            <header class="message-options_section_TreeStyleTabId"></header>
-            
-            <label class="message-options_treeStyleTabInternalId_info textSelectable"></label>
-            <br />
-            <br />
-            
-            
-            <label>
-                <input id="requestTreeStyleTabPermission_tabs" type="checkbox">
-                <text class="message-options_requestTreeStyleTabPermission_tabs"></text>
-            </label>
-            <br />
-            <br />
-            
-            <div>
-                <label class="message-options_treeStyleTabInternalId"></label>
-                <input id="treeStyleTabInternalId" type="text">
+                <div>
+                    <label class="message-options_treeStyleTabInternalId"></label>
+                    <input id="treeStyleTabInternalId" type="text">
+                </div>
+                <div class="internal-tst-id-buttons">
+                    <button id="TST_InternalId_ResetButton" class="message-options_TST_InternalId_Reset"></button>
+                    <button id="TST_InternalId_UpdateButton"
+                        class="message-options_TST_InternalId_ForceUpdate"></button>
+                </div>
             </div>
-            <div class="internal-tst-id-buttons">
-                <button id="TST_InternalId_ResetButton" class="message-options_TST_InternalId_Reset"></button>
-                <button id="TST_InternalId_UpdateButton" class="message-options_TST_InternalId_ForceUpdate"></button>
-            </div>
+        </fieldset>
+        <br />
+        <br />
+
+        <div id="permissionsArea" class="sectionArea collapsed">
+            <header class="message-options_OptionalPermissions_Header"></header>
+
         </div>
+        <br />
+
+        <label>
+            <input id="optionsPage_disableDarkTheme" type="checkbox">
+            <text class="message-options_optionsPage_disableDarkTheme"></text>
+        </label>
+        <br />
         <br />
 
         <button id="resetSettingsButton" class="message-options_resetSettings"></button>
