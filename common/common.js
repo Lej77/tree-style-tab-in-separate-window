@@ -101,6 +101,9 @@ function getDefaultSettings() {
     newWindow_besideCurrentWindow: true,
     newWindow_besideCurrentWindow_spaceBetween: -13,
 
+    /** Set a title preface for the created window (leave empty to disable). */
+    newWindow_besideCurrentWindow_titlePreface: 'Tree Style Tab Sidebar',
+
     // Auto detect/open docked sidebars at startup:
     newWindow_besideCurrentWindow_autoOpenAtStartup: false,
     newWindow_besideCurrentWindow_autoDetectAtStartup: false,

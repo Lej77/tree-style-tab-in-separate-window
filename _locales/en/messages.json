@@ -29,6 +29,9 @@
     "options_legend_window_WindowType": {
         "message": "Window type"
     },
+    "options_legend_window_WindowTitle": {
+        "message": "Window title"
+    },
     "options_legend_window_BesideCurrentWindow": {
         "message": "Open beside current window"
     },
@@ -118,6 +121,9 @@
     },
     "options_newWindow_besideCurrentWindow_spaceBetween": {
         "message": "Space between the created window and the current window (can be negative): "
+    },
+    "options_newWindow_besideCurrentWindow_titlePreface": {
+        "message": "Set a title preface (prefix) for created windows (leave empty to disable) (note that title prefaces are shared between extensions and therefore another extension could override this preface): "
     },
     "options_newWindow_besideCurrentWindow_autoOpenAtStartup": {
         "message": "Auto open a sidebar window for each window when the browser is started."

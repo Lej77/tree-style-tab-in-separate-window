@@ -365,6 +365,7 @@ async function handleFailedToDetermineTreeStyleTabInternalId() {
  * @param {number} [Info.height] The height of the window. `-1` or unspecified to use default height.
  * @param {boolean} [Info.besideCurrentWindow] Create the window next to the current window. This will also ensure that the window is tracked via the "simulate docking" feature.
  * @param {number} [Info.besideCurrentWindow_spaceBetween] Space between the created window and the window that it is placed next to.
+ * @param {string} [Info.besideCurrentWindow_titlePreface] Title preface to set for created window.
  * @param {boolean} [Info.besideCurrentWindow_simulateDocking_refocusParent] Refocus the current window after the new window has been created.
  * @param {number | null} [Info.tabId] The id of a tab that should be moved to the newly created window.
  * @param {string | string[]} [Info.url] A URL or array of URLs to open as tabs in the window.
@@ -380,6 +381,7 @@ async function createDockedWindow({
   height = -1,
   besideCurrentWindow = false,
   besideCurrentWindow_spaceBetween = -1,
+  besideCurrentWindow_titlePreface = '',
   besideCurrentWindow_simulateDocking_refocusParent = false,
   tabId = null,
   url = null,
@@ -400,6 +402,9 @@ async function createDockedWindow({
 
   if (popup) {
     details.type = popup_hidden ? 'panel' : 'popup';
+  }
+  if (besideCurrentWindow_titlePreface) {
+    details.titlePreface = besideCurrentWindow_titlePreface;
   }
   if (width && width > 0) {
     details.width = +width;
