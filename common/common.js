@@ -54,6 +54,9 @@ function getDefaultSettings() {
     useModernSidebarUrl: true,
     requestTreeStyleTabPermission_tabs: false,
 
+    /** The title of Tree Style Tab's sidebar page when opened as a tab (also affects the name of windows when it is the active/selected tab). */
+    tstSidebarPageTitle: 'Tree Style Tab Sidebar',
+
 
     fixSidebarStyle: false,
 
@@ -102,7 +105,7 @@ function getDefaultSettings() {
     newWindow_besideCurrentWindow_spaceBetween: -13,
 
     /** Set a title preface for the created window (leave empty to disable). */
-    newWindow_besideCurrentWindow_titlePreface: 'Tree Style Tab Sidebar',
+    newWindow_besideCurrentWindow_titlePreface: '',
 
     // Auto detect/open docked sidebars at startup:
     newWindow_besideCurrentWindow_autoOpenAtStartup: false,

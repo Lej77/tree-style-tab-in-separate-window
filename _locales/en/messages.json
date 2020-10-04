@@ -23,6 +23,9 @@
     "options_legend_TabPosition": {
         "message": "Tab position"
     },
+    "options_legend_tstPageTitle": {
+        "message": "Title of sidebar page"
+    },
     "options_legend_LegacyTST": {
         "message": "Legacy Settings (Required for Tree Style Tab v3.5.6 and earlier)"
     },
@@ -107,6 +110,9 @@
     "options_openAsChildOfCurrentTab": {
         "message": "When the sidebar page is opened in a separate tab in the current window, it should be a child of the current tab. (The new tab must be placed after the current tab.)"
     },
+    "options_tstSidebarPageTitle": {
+        "message": "Title of the opened Tree Style Tab sidebar page (requires Tree Style Tab v3.5.30 or later): "
+    },
     "options_delayBeforeWindowSeparation": {
         "message": "When the sidebar page is loaded it takes a little while before it has determined what window it should control. Wait this long before moving the sidebar page's tab to a new window: "
     },
@@ -123,7 +129,7 @@
         "message": "Space between the created window and the current window (can be negative): "
     },
     "options_newWindow_besideCurrentWindow_titlePreface": {
-        "message": "Set a title preface (prefix) for created windows (leave empty to disable) (note that title prefaces are shared between extensions and therefore another extension could override this preface): "
+        "message": "Set a title preface (prefix) for created windows (leave empty to disable) (note that title prefaces are shared between extensions and therefore another extension could override this preface) (in Tree Style Tab v3.5.30 or later the title is already set on the opened page/tab so this setting won't usually be needed): "
     },
     "options_newWindow_besideCurrentWindow_autoOpenAtStartup": {
         "message": "Auto open a sidebar window for each window when the browser is started."

@@ -516,6 +516,7 @@ async function createDockedWindow({
  * @param {boolean} [Params.openDirectlyInNewWindow] Don't open the new tab in the current window at all, instead open it directly in the new window. To track the current window correctly this requires Tree Style Tab v3.5.6 or later.
  * @param {Parameters<typeof createDockedWindow>[0]} [Params.windowSettings] Specify how the new window should be created.
  * @param {null | number} [Params.delayBeforeWindowSeperationInMilliseconds] Delay in milliseconds before moving the created tab to a new window.
+ * @param {string | null} [Params.pageTitle] The title of the opened "sidebar" page.
  * @returns {Promise<BrowserTab | null | false>} The opened tab. `false` if Tree Style Tab wasn't found. `null` for other issues.
  */
 async function openTreeStyleTabSidebarInTab({
@@ -525,7 +526,8 @@ async function openTreeStyleTabSidebarInTab({
   childOfCurrent = false,
   openDirectlyInNewWindow = false,
   windowSettings = null,
-  delayBeforeWindowSeperationInMilliseconds = null
+  delayBeforeWindowSeperationInMilliseconds = null,
+  pageTitle = null,
 } = {}) {
 
 
@@ -577,7 +579,7 @@ async function openTreeStyleTabSidebarInTab({
     return null;
   }
 
-  const sidebarURL = getSidebarURL({ internalId, windowId: activeTab.windowId });
+  const sidebarURL = getSidebarURL({ internalId, windowId: activeTab.windowId, title: pageTitle });
 
   // #endregion Info
 
@@ -691,16 +693,26 @@ async function openTreeStyleTabSidebarInTab({
   return tab;
 }
 
-
+// eslint-disable-next-line valid-jsdoc
+/**
+ * Get default info for calling `openTreeStyleTabSidebarInTab`.
+ *
+ * @param { Partial<Parameters<typeof openTreeStyleTabSidebarInTab>[0]> } [overrides] Optionally override some of the default values.
+ * @param {Object} [Params] Configure what default values are generated.
+ * @param {boolean} [Params.dockedWindow] Indicates whether the new window will be "docked".
+ * @returns {Parameters<typeof openTreeStyleTabSidebarInTab>[0]} Info that can be used when calling `openTreeStyleTabSidebarInTab`.
+ */
 function getDefaultMoveDetails(overrides = {}, { dockedWindow = false } = {}) {
   // Define global settings:
+  /** @type {Parameters<typeof openTreeStyleTabSidebarInTab>[0]} */
   const info = {
     openAfterCurrent: settings.openAfterCurrentTab,
     childOfCurrent: settings.openAsChildOfCurrentTab,
     delayBeforeWindowSeperationInMilliseconds: settings.delayBeforeWindowSeperationInMilliseconds,
     openDirectlyInNewWindow: overrides.createNewWindow && !settings.useTemporaryTabWhenOpeningNewWindow,
+    pageTitle: settings.tstSidebarPageTitle,
   };
-  // Pass new window settings:
+  // Pass new ("docked") window settings:
   if (dockedWindow) {
     const windowInfo = {};
     const prefix = 'newWindow_';
@@ -711,7 +723,7 @@ function getDefaultMoveDetails(overrides = {}, { dockedWindow = false } = {}) {
     }
     info.windowSettings = windowInfo;
   }
-  // Apply override and return:
+  // Apply overrides and return:
   return Object.assign(info, overrides);
 }
 
@@ -1077,11 +1089,11 @@ settingsTracker.start.finally(async () => {
                 // Use Tree Style Tab's new "windowId" query parameter. Change the tab's URL to one with the parent window's id instead of closing the window.
                 let sidebarUrl = null;
                 if (settings.useModernSidebarUrl) {
-                  sidebarUrl = getSidebarURL({ windowId: parentWindow.id });
+                  sidebarUrl = getSidebarURL({ windowId: parentWindow.id, title: settings.tstSidebarPageTitle });
                 } else {
                   const internalId = await getInternalTSTId();
                   if (internalId) {
-                    sidebarUrl = getSidebarURL({ internalId, windowId: parentWindow.id });
+                    sidebarUrl = getSidebarURL({ internalId, windowId: parentWindow.id, title: settings.tstSidebarPageTitle });
                   } else {
                     console.warn('Failed to get internal Tree Style Tab id. Can\'t update old "sidebar" page\'s URL to point to new parent windowId.\nOld sidebar window: ', window, '\nparentWindow: ', parentWindow);
                   }
