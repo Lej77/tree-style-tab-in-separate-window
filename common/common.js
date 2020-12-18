@@ -27,12 +27,12 @@ export const kWINDOW_DATA_KEY_DOCKING_INFO = 'docking-info';
 
 /** Messages that can be sent to the background page via a Port connection. */
 export const messageTypes = Object.freeze({
-    /** Notify that a permission might have been granted or revoked. */
-    permissionsChanged: 'permissionsChanged',
-    /** Request that the background page requests a permission from the user. */
-    requestPermission: 'requestPermission',
-    handleFailedToGetInternalId: 'handle-failed-get-internal-id',
-    getTstStyle: 'get-tst-style',
+  /** Notify that a permission might have been granted or revoked. */
+  permissionsChanged: 'permissionsChanged',
+  /** Request that the background page requests a permission from the user. */
+  requestPermission: 'requestPermission',
+  handleFailedToGetInternalId: 'handle-failed-get-internal-id',
+  getTstStyle: 'get-tst-style',
 });
 
 // #endregion Constants
@@ -104,6 +104,14 @@ function getDefaultSettings() {
     newWindow_besideCurrentWindow: true,
     newWindow_besideCurrentWindow_spaceBetween: -13,
 
+    /** Open the window to the right of the main window instead of the left. */
+    newWindow_besideCurrentWindow_rightOfWindow: false,
+
+    // Position limits:
+    newWindow_besideCurrentWindow_horizontalPosition_min_enabled: false,
+    newWindow_besideCurrentWindow_horizontalPosition_min: -8,
+    newWindow_besideCurrentWindow_horizontalPosition_max: -1,
+
     /** Set a title preface for the created window (leave empty to disable). */
     newWindow_besideCurrentWindow_titlePreface: '',
 
@@ -117,6 +125,9 @@ function getDefaultSettings() {
     /** Time time in milliseconds between each check of the docked windows' states. If a change is detected then switches to the fast interval for a while for smoother updates. */
     newWindow_besideCurrentWindow_simulateDocking_slowInterval: 1000,
     newWindow_besideCurrentWindow_simulateDocking_fastInterval: 25,
+
+    /** Control the docked window's position. */
+    newWindow_besideCurrentWindow_simulateDocking_controlPosition: true,
 
     // Sync state:
     newWindow_besideCurrentWindow_simulateDocking_minimize: true,

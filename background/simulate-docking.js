@@ -308,7 +308,7 @@ export function forceSetAllSessionData() {
 null;
 
 
-/**@type { TrackedWindowInfo[] } */
+/**@type { TrackedWindowInfo[] } Info about opened windows that are used as Tree Style Tab sidebars. */
 let openSidebarWindows = [];
 let simulateDockingIntervalId = null;
 let simulateDockingInterval = 0;
@@ -593,6 +593,7 @@ async function onWindowFocusChanged(windowId) {
 }
 function simulateDocking() {
     if (openSidebarWindows.length === 0) {
+        // Disable all listeners since there is nothing to check:
         checkSimulateDocking();
         return;
     }
@@ -711,9 +712,16 @@ function simulateDocking() {
                 }
             }
 
-            const offset = sidebarWindow.width + (+settings.newWindow_besideCurrentWindow_spaceBetween);
-            let x = parentWindow.left - offset;
 
+            // Might have disabled position control:
+            if (!settings.newWindow_besideCurrentWindow_simulateDocking_controlPosition) return;
+
+
+            let x = settings.newWindow_besideCurrentWindow_rightOfWindow ?
+                parentWindow.left + parentWindow.width + (+settings.newWindow_besideCurrentWindow_spaceBetween) :
+                parentWindow.left - sidebarWindow.width - (+settings.newWindow_besideCurrentWindow_spaceBetween);
+
+            /** @type {number | null} The height used when tiling sidebar windows bellow each other. All windows will have the same height. */
             let tilingHeight = null;
             let height = sidebarWindow.height;
             if (settings.newWindow_besideCurrentWindow_simulateDocking_syncHeight) {
@@ -742,22 +750,27 @@ function simulateDocking() {
                         }
                     }
                 } else if (settings.newWindow_besideCurrentWindow_simulateDocking_tileWidth) {
+                    let tilingOffset = 0;
                     if (settings.newWindow_besideCurrentWindow_simulateDocking_syncWidth) {
                         // All window's will have the same width so just use that width for the x position calculation.
-                        x -= (settings.newWindow_width + settings.newWindow_besideCurrentWindow_spaceBetween) * sidebarIndex;
+                        tilingOffset += (settings.newWindow_width + settings.newWindow_besideCurrentWindow_spaceBetween) * sidebarIndex;
                     } else {
                         // Add up the width of all the windows before this one so that it will be placed to the left of them all.
                         for (let iii = 0; iii < sidebarIndex && iii < sidebarWindows.length; iii++) {
-                            x -= sidebarWindows[iii].window.width + settings.newWindow_besideCurrentWindow_spaceBetween;
+                            tilingOffset += sidebarWindows[iii].window.width + settings.newWindow_besideCurrentWindow_spaceBetween;
                         }
+                    }
+                    if (settings.newWindow_besideCurrentWindow_rightOfWindow) {
+                        // Move window more to the right:
+                        x += tilingOffset;
+                    } else {
+                        // Move window more to the left:
+                        x -= tilingOffset;
                     }
                 }
             }
 
 
-            if (x < 0) {
-                x = 0;
-            }
             const wantedPos = { top: y, left: x };
             if (sidebarWindow.height !== height) {
                 wantedPos.height = height;
@@ -783,6 +796,27 @@ function simulateDocking() {
                 delete wantedPos.height;
             }
 
+            /** The minimum value for the window's x position. `0` does not
+             * necessarily mean the left edge of the screen but it should be
+             * close. */
+            let minX;
+            if (settings.newWindow_besideCurrentWindow_horizontalPosition_min_enabled) {
+                minX = Number(settings.newWindow_besideCurrentWindow_horizontalPosition_min);
+            } else {
+                // Use half of window width, so only half the window can be outside the screen:
+                minX = ((wantedPos.width || sidebarWindow.width || 0) / 2) * -1;
+            }
+            if (wantedPos.left < minX) {
+                wantedPos.left = minX;
+            }
+
+            if (settings.newWindow_besideCurrentWindow_horizontalPosition_max >= 0) {
+                const maxX = settings.newWindow_besideCurrentWindow_horizontalPosition_max - (wantedPos.width || sidebarWindow.width);
+                if (wantedPos.left > maxX) {
+                    wantedPos.left = maxX;
+                }
+            }
+
             // Update window's position:
             if (
                 sidebarWindow.top !== wantedPos.top ||
@@ -799,7 +833,7 @@ function simulateDocking() {
     });
 }
 async function simulateDockingBackground() {
-    let wasFast = fastSimulatedDocking;
+    const wasFast = fastSimulatedDocking;
     fastSimulatedDocking = false;
 
     if (
@@ -998,13 +1032,20 @@ export async function findSidebarWindows({ allWindows, waitForTstTimeoutInMillis
     const sidebarWindowsWithParents = await Promise.all(sidebarWindows.map(async (sidebarWindowInfo) => {
         const window = sidebarWindowInfo.window;
 
-        let parentX = window.left + window.width + xSpaceBetweenWindows;
+        /** Expected value for `parent.left` or if right of window then `parent.right`. */
+        let parentX = settings.newWindow_besideCurrentWindow_rightOfWindow ? window.left - xSpaceBetweenWindows : window.left + window.width + xSpaceBetweenWindows;
         let parentY = window.top;
 
         let otherPossibleParents = possibleParentWindows
             .filter(parent => parent.id !== window.id && parent.incognito === window.incognito)
             // Distance to parent from expect position:
-            .map(parent => /** @type {[BrowserWindow, number, number]} */([parent, Math.abs(parent.left - parentX), Math.abs(parent.top - parentY)]))
+            .map(parent => /** @type {[BrowserWindow, number, number]} */([
+                parent,
+                // delta X:
+                Math.abs(settings.newWindow_besideCurrentWindow_rightOfWindow ? parent.left + parent.width - parentX : parent.left - parentX),
+                // delta Y:
+                Math.abs(parent.top - parentY)
+            ]))
             // Total distance:
             .map(([parent, x, y]) => /** @type {[BrowserWindow, number, number, number]} */([parent, x, y, Math.sqrt(x * x + y * y)]))
             // Sort based on distance:
@@ -1013,7 +1054,7 @@ export async function findSidebarWindows({ allWindows, waitForTstTimeoutInMillis
         let [[possibleParent, xDistToParent, yDistToParent, distToPossibleParent],] = otherPossibleParents;
 
         if (distToPossibleParent > 3) {
-            otherPossibleParents = otherPossibleParents.sort(([winA, winAX, winAY, winAD], [winB, winBX, winBY, winBD]) => winAX - winBX);
+            otherPossibleParents = otherPossibleParents.sort(([_winA, winAX, _winAY, _winAD], [_winB, winBX, _winBY, _winBD]) => winAX - winBX);
             [[possibleParent, xDistToParent, yDistToParent, distToPossibleParent],] = otherPossibleParents;
         }
 

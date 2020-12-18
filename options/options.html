@@ -8,6 +8,11 @@
 
 <body>
     <div>
+        <div id="topLinkToOptionsPageArea">
+            <a id="topLinkToOptionsPage" target="_blank" class="message-options_openInSeparateTab"></a>
+            <br />
+            <br />
+        </div>
 
         <div class="sectionArea collapsed">
             <header class="message-options_section_ContextMenu"></header>
@@ -195,12 +200,52 @@
                         <text class="message-options_newWindow_besideCurrentWindow"></text>
                     </label>
                 </div>
+                <br />
+
+                <div class="requires-newWindow_besideCurrentWindow">
+                    <label>
+                        <input id="newWindow_besideCurrentWindow_rightOfWindow" type="checkbox">
+                        <text class="message-options_newWindow_besideCurrentWindow_rightOfWindow"></text>
+                    </label>
+                </div>
 
                 <p class="requires-newWindow_besideCurrentWindow">
                     <span class="message-options_newWindow_besideCurrentWindow_spaceBetween"></span>
                     <input id="newWindow_besideCurrentWindow_spaceBetween" type="number">
                     <span class="message-options_Pixels"></span>
                 </p>
+                <br />
+
+                <fieldset class="requires-newWindow_besideCurrentWindow">
+                    <legend class="message-options_legend_window_PositionLimits"></legend>
+
+                    <div>
+                        <label>
+                            <input
+                                id="newWindow_besideCurrentWindow_horizontalPosition_min_enabled"
+                                type="checkbox">
+                            <text
+                                class="message-options_newWindow_besideCurrentWindow_horizontalPosition_min_enabled"></text>
+                        </label>
+                    </div>
+
+                    <p
+                        class="requires-newWindow_besideCurrentWindow_horizontalPosition_min_enabled">
+                        <span
+                            class="message-options_newWindow_besideCurrentWindow_horizontalPosition_min"></span>
+                        <input id="newWindow_besideCurrentWindow_horizontalPosition_min"
+                            type="number">
+                        <span class="message-options_Pixels"></span>
+                    </p>
+
+                    <p>
+                        <span
+                            class="message-options_newWindow_besideCurrentWindow_horizontalPosition_max"></span>
+                        <input id="newWindow_besideCurrentWindow_horizontalPosition_max"
+                            type="number">
+                        <span class="message-options_Pixels"></span>
+                    </p>
+                </fieldset>
                 <br />
 
                 <fieldset class="requires-newWindow_besideCurrentWindow">
@@ -258,7 +303,7 @@
 
                         <div class="requires-newWindow_besideCurrentWindow_simulateDocking_slowInterval">
 
-                            <p class="">
+                            <p>
                                 <span
                                     class="message-options_newWindow_besideCurrentWindow_simulateDocking_fastInterval"></span>
                                 <input id="newWindow_besideCurrentWindow_simulateDocking_fastInterval" type="number"
@@ -266,7 +311,7 @@
                                 <span class="message-options_Milliseconds"></span>
                             </p>
 
-                            <div class="">
+                            <div>
                                 <label>
                                     <input id="newWindow_besideCurrentWindow_simulateDocking_minimize" type="checkbox">
                                     <text
@@ -278,7 +323,7 @@
                             <fieldset>
                                 <legend class="message-options_legend_window_AutoClose"></legend>
 
-                                <div class="">
+                                <div>
                                     <label>
                                         <input id="newWindow_besideCurrentWindow_simulateDocking_autoClose"
                                             type="checkbox">
@@ -320,7 +365,7 @@
                             <fieldset>
                                 <legend class="message-options_legend_window_WindowFocus"></legend>
 
-                                <div class="">
+                                <div>
                                     <label>
                                         <input id="newWindow_besideCurrentWindow_simulateDocking_autoFocus"
                                             type="checkbox">
@@ -330,7 +375,7 @@
                                 </div>
                                 <br />
 
-                                <div class="">
+                                <div>
                                     <label>
                                         <input id="newWindow_besideCurrentWindow_simulateDocking_refocusParent"
                                             type="checkbox">
@@ -341,10 +386,22 @@
                             </fieldset>
                             <br />
 
-                            <fieldset>
-                                <legend class="message-options_legend_window_WithAndHeight"></legend>
 
-                                <div class="">
+                            <div>
+                                <label>
+                                    <input id="newWindow_besideCurrentWindow_simulateDocking_controlPosition"
+                                        type="checkbox">
+                                    <text
+                                        class="message-options_newWindow_besideCurrentWindow_simulateDocking_controlPosition"></text>
+                                </label>
+                            </div>
+                            <br />
+
+
+                            <fieldset class="requires-newWindow_besideCurrentWindow_simulateDocking_controlPosition">
+                                <legend class="message-options_legend_window_WidthAndHeight"></legend>
+
+                                <div>
                                     <label>
                                         <input id="newWindow_besideCurrentWindow_simulateDocking_syncHeight"
                                             type="checkbox">
@@ -354,7 +411,7 @@
                                 </div>
                                 <br />
 
-                                <div class="">
+                                <div>
                                     <label>
                                         <input id="newWindow_besideCurrentWindow_simulateDocking_syncWidth"
                                             type="checkbox">
@@ -365,7 +422,7 @@
                             </fieldset>
                             <br />
 
-                            <fieldset>
+                            <fieldset class="requires-newWindow_besideCurrentWindow_simulateDocking_controlPosition">
                                 <legend class="message-options_legend_window_MultipleSidebarWindows"></legend>
 
                                 <div class="requires-!newWindow_besideCurrentWindow_simulateDocking_tileHeight">

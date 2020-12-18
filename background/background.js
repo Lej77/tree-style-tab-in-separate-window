@@ -364,6 +364,7 @@ async function handleFailedToDetermineTreeStyleTabInternalId() {
  * @param {number} [Info.width] The width of the window. `-1` or unspecified to use default width.
  * @param {number} [Info.height] The height of the window. `-1` or unspecified to use default height.
  * @param {boolean} [Info.besideCurrentWindow] Create the window next to the current window. This will also ensure that the window is tracked via the "simulate docking" feature.
+ * @param {boolean} [Info.besideCurrentWindow_rightOfWindow] Open the window to the right of the parent window.
  * @param {number} [Info.besideCurrentWindow_spaceBetween] Space between the created window and the window that it is placed next to.
  * @param {string} [Info.besideCurrentWindow_titlePreface] Title preface to set for created window.
  * @param {boolean} [Info.besideCurrentWindow_simulateDocking_refocusParent] Refocus the current window after the new window has been created.
@@ -381,6 +382,7 @@ async function createDockedWindow({
   height = -1,
   besideCurrentWindow = false,
   besideCurrentWindow_spaceBetween = -1,
+  besideCurrentWindow_rightOfWindow = false,
   besideCurrentWindow_titlePreface = '',
   besideCurrentWindow_simulateDocking_refocusParent = false,
   tabId = null,
@@ -412,34 +414,57 @@ async function createDockedWindow({
   if (height && height > 0) {
     details.height = +height;
   }
-  let currentWindow = null;
+
+  /** @type {null | BrowserWindow} Info about parent window. */
+  let parentWindow = null;
+
+  async function getWantedXAndMoveParent(sidebarWindow) {
+    /** @type {number} */
+    let x;
+    if (besideCurrentWindow_rightOfWindow) {
+      x = parentWindow.left + parentWindow.width + (+besideCurrentWindow_spaceBetween);
+      if (
+        settings.newWindow_besideCurrentWindow_horizontalPosition_max >= 0 &&
+        (x > (settings.newWindow_besideCurrentWindow_horizontalPosition_max - sidebarWindow.width))
+      ) {
+        x = Math.round(settings.newWindow_besideCurrentWindow_horizontalPosition_max - sidebarWindow.width);
+        // Move parent window to the left to leave more space for sidebar window:
+        parentWindow = await browser.windows.update(parentWindow.id, { left: x - parentWindow.width - (+besideCurrentWindow_spaceBetween) });
+      }
+    } else {
+      const offset = sidebarWindow.width + (+besideCurrentWindow_spaceBetween);
+      x = parentWindow.left - offset;
+      let minX = -Math.round(sidebarWindow.width / 2);
+      if (settings.newWindow_besideCurrentWindow_horizontalPosition_min_enabled) {
+        minX = Math.round(settings.newWindow_besideCurrentWindow_horizontalPosition_min);
+      }
+      if (x < minX) {
+        x = minX;
+        // Move window to the right to leave more space:
+        parentWindow = await browser.windows.update(parentWindow.id, { left: offset + minX });
+      }
+    }
+    return x;
+  }
+
   if (besideCurrentWindow) {
     if (!details.width) {
       details.width = 235;
     }
-    currentWindow = await browser.windows.get(parentWindowId);
-    if (currentWindow.state !== 'normal') {
-      currentWindow = await browser.windows.update(currentWindow.id, { state: 'normal' });
+    parentWindow = await browser.windows.get(parentWindowId);
+    if (parentWindow.state !== 'normal') {
+      parentWindow = await browser.windows.update(parentWindow.id, { state: 'normal' });
     }
 
-    const offset = details.width + (+besideCurrentWindow_spaceBetween);
-    let x = currentWindow.left - offset;
-    if (x < 0) {
-      x = 0;
-      // Move window to the right to leave more space:
-      currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
-    }
-
-    Object.assign(details, {
-      top: currentWindow.top,
-      left: x,
-    });
+    details.top = parentWindow.top;
+    details.left = await getWantedXAndMoveParent(details);
     if (!details.height) {
-      details.height = currentWindow.height;
+      details.height = parentWindow.height;
     }
   }
 
   // Create window:
+  /** @type {BrowserWindow} Created sidebar window. */
   const window = await browser.windows.create(details);
 
   let customOp;
@@ -452,7 +477,7 @@ async function createDockedWindow({
     const trackedSidebarInfo = { window: window, windowId: window.id, parentWindowId: parentWindowId };
 
     browser.windows.get(trackedSidebarInfo.parentWindowId)
-      .then(window => (trackedSidebarInfo.parentWindow = window, true))
+      .then(parentWindow => (trackedSidebarInfo.parentWindow = parentWindow, true))
       .catch(error => (console.error('Failed to cache parentWindow for opened sidebar window\nError: ', error), false));
 
     addTrackedWindow(trackedSidebarInfo);
@@ -462,20 +487,15 @@ async function createDockedWindow({
     }
   }
 
+  /** `true` if the window wasn't opened where we expected. */
   let changedPos = false;
-  if (besideCurrentWindow && currentWindow !== null) {
+  if (besideCurrentWindow && parentWindow !== null) {
     // Double check offset (window width/height might be different than specified):
 
-    const offset = window.width + (+besideCurrentWindow_spaceBetween);
-    let x = currentWindow.left - offset;
-    if (x < 0) {
-      x = 0;
-      // Move window to the right to leave more space:
-      currentWindow = await browser.windows.update(currentWindow.id, { left: offset });
-    }
+    let x = await getWantedXAndMoveParent(window);
 
-    if (details.top !== currentWindow.top) {
-      details.top = currentWindow.top;
+    if (details.top !== parentWindow.top) {
+      details.top = parentWindow.top;
       changedPos = true;
     }
     if (details.left !== x) {

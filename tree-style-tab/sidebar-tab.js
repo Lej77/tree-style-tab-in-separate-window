@@ -20,8 +20,8 @@ export const kTST_SIDEBAR_URL = 'ext+treestyletab:tabbar';
  * @param {string|null} [Info.internalId] The internal id for Tree Style Tab. If `null` then the new sidebar url will be used which isn't supported in TST v3.5.5 and earlier.
  * @param {number|null} [Info.windowId] The id of the window that the sidebar page should track. If this isn't provided then Tree Style Tab will track the window that the page is opened in. This is *not* supported in Tree Style Tab version `3.5.5` and earlier.
  * @param {string|null} [Info.style] The Tree Style Tab theme/style that should be used, can for example be `mixed`. If this isn't provided then Tree Style Tab will load this info from its settings.
- * @param {string|null} [Info.title] The title of the page. If this is specified then Tree Style Tab will set the title of the opened page to this string.
- * @returns {string|null} The URL for Tree Style Tab's sidebar page. Will be `null` if `internalId` was `null`.
+ * @param {string|null} [Info.title] The title of the page. If this is specified then Tree Style Tab will set the title of the opened page to this string. (Requires Tree Style Tab v3.5.30 or later.)
+ * @returns {string|null} The URL for Tree Style Tab's sidebar page.
  */
 export function getSidebarURL({ internalId = null, windowId = null, style = null, title = null }) {
     const url = internalId ?

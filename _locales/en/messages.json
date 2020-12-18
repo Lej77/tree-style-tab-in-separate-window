@@ -53,11 +53,17 @@
     "options_legend_window_WindowFocus": {
         "message": "Window focus"
     },
-    "options_legend_window_WithAndHeight": {
+    "options_legend_window_PositionLimits": {
+        "message": "Limit horizontal position"
+    },
+    "options_legend_window_WidthAndHeight": {
         "message": "Control width and height"
     },
     "options_legend_window_MultipleSidebarWindows": {
         "message": "Multiple sidebar windows"
+    },
+    "options_openInSeparateTab": {
+        "message": "Open this options page in a separate tab"
     },
     "options_fixSidebarStyle": {
         "message": "Fix some style issues that occur when the Tree Style Tab sidebar page is opened in a tab. These issues should already be fixed in Tree Style Tab v3.5.6 and later."
@@ -125,8 +131,20 @@
     "options_newWindow_besideCurrentWindow": {
         "message": "Create the new window beside the current window (will un-maximize the current window if needed)."
     },
+    "options_newWindow_besideCurrentWindow_rightOfWindow": {
+        "message": "Open the window to the right of the main window instead of to the left."
+    },
     "options_newWindow_besideCurrentWindow_spaceBetween": {
         "message": "Space between the created window and the current window (can be negative): "
+    },
+    "options_newWindow_besideCurrentWindow_horizontalPosition_min_enabled": {
+        "message": "Enable a lower limit for the horizontal position of the docked sidebar window."
+    },
+    "options_newWindow_besideCurrentWindow_horizontalPosition_min": {
+        "message": "The minimum number of pixels to the left of the docked window's left corner (0 might not match exactly 0 pixels): "
+    },
+    "options_newWindow_besideCurrentWindow_horizontalPosition_max": {
+        "message": "The maximum number of pixels to the left of the docked window's right corner (set to \"-1\" to disable this limit): "
     },
     "options_newWindow_besideCurrentWindow_titlePreface": {
         "message": "Set a title preface (prefix) for created windows (leave empty to disable) (note that title prefaces are shared between extensions and therefore another extension could override this preface) (in Tree Style Tab v3.5.30 or later the title is already set on the opened page/tab so this setting won't usually be needed): "
@@ -173,6 +191,9 @@
     "options_newWindow_besideCurrentWindow_simulateDocking_refocusParent": {
         "message": "If a docked sidebar window gets focus then quickly focus its parent window."
     },
+    "options_newWindow_besideCurrentWindow_simulateDocking_controlPosition": {
+        "message": "Control the position and size of docked sidebar windows."
+    },
     "options_newWindow_besideCurrentWindow_simulateDocking_syncHeight": {
         "message": "The sidebar window should have the same height as the parent window."
     },
@@ -180,7 +201,7 @@
         "message": "All sidebar windows should have the same width. (This will sync the width of all docked sidebar windows to the \"Width of the created window\" setting. So each time a docked sidebar window is resized the setting will be changed and if the setting is changed then the docked sidebar windows will be resized.)"
     },
     "options_newWindow_besideCurrentWindow_simulateDocking_tileWidth": {
-        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed beside each other."
+        "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed beside each other. (Change the \"Space between the created window and the current window\" setting to change the distance between the windows.)"
     },
     "options_newWindow_besideCurrentWindow_simulateDocking_tileHeight": {
         "message": "If there are more than one docked sidebar window for a parent window then the sidebar windows should be placed under each other. (Overrides the \"placed beside each other\" option.)"
