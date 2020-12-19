@@ -804,7 +804,7 @@ function simulateDocking() {
                 minX = Number(settings.newWindow_besideCurrentWindow_horizontalPosition_min);
             } else {
                 // Use half of window width, so only half the window can be outside the screen:
-                minX = ((wantedPos.width || sidebarWindow.width || 0) / 2) * -1;
+                minX = Math.round((wantedPos.width || sidebarWindow.width || 0) / 2) * -1;
             }
             if (wantedPos.left < minX) {
                 wantedPos.left = minX;
